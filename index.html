@@ -96,18 +96,18 @@ html,body{height:100%;background:#000;background:var(--bg);color:var(--text);fon
 .user-pts{font-size:11px;color:var(--yellow);font-weight:700}
 
 /* ══ SPECIAL ══ */
-.special{border-radius:18px;padding:16px;display:flex;gap:12px;align-items:center;cursor:pointer;transition:transform .15s;position:relative;overflow:hidden}
+.special{border-radius:14px;padding:11px 14px;display:flex;gap:10px;align-items:center;cursor:pointer;transition:transform .15s;position:relative;overflow:hidden}
 .special:active{transform:scale(.97)}
-.special.wed{background:linear-gradient(135deg,#bf5af218,#5e5ce612);border:1.5px solid #bf5af228}
-.special.wknd{background:linear-gradient(135deg,#ffd60a10,#ff6b0008);border:1.5px solid #ffd60a25}
+.special.wed{background:rgba(191,90,242,0.05);border:1px solid rgba(191,90,242,0.12)}
+.special.wknd{background:rgba(255,214,10,0.04);border:1px solid rgba(255,214,10,0.12)}
 .spec-shine{position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.04) 50%,transparent 60%);animation:shine 3s infinite}
 @keyframes shine{0%{transform:translateX(-200%)}100%{transform:translateX(200%)}}
-.spec-icon{font-size:32px;flex-shrink:0}
+.spec-icon{font-size:22px;flex-shrink:0}
 .spec-pill{display:inline-block;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;padding:3px 10px;border-radius:100px;margin-bottom:4px}
 .special.wed .spec-pill{background:#bf5af220;color:#bf5af2}
 .special.wknd .spec-pill{background:#ffd60a18;color:#ffd60a}
-.spec-title{font-size:15px;font-weight:800;margin-bottom:1px}
-.spec-hint{font-size:12px;color:var(--muted)}
+.spec-title{font-size:13px;font-weight:700;margin-bottom:1px}
+.spec-hint{font-size:11px;color:var(--muted)}
 
 /* ══ DAILY ══ */
 .daily-card{background:var(--card);border:1.5px solid var(--border);border-radius:18px;padding:16px 18px;position:relative;overflow:hidden}
@@ -121,7 +121,7 @@ html,body{height:100%;background:#000;background:var(--bg);color:var(--text);fon
 .daily-done{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--green)}
 
 /* ══ WIZARD ══ */
-.wiz-steps{display:flex;gap:5px;padding:4px 0}
+.wiz-steps{display:none}
 .ws{flex:1;height:3px;border-radius:100px;background:var(--border);transition:all .35s}
 .ws.on{background:linear-gradient(90deg,var(--red),var(--orange));flex:2.5}
 .ws.done{background:var(--green)}
@@ -1107,6 +1107,29 @@ async function sbSaveProfile(){
 async function sbLookupFriend(code){
   const res=await sbFetch('/rest/v1/profiles?friend_code=eq.'+encodeURIComponent(code)+'&select=*');
   return(res&&res.length>0)?res[0]:null;
+}
+
+async function sbSendFriendRequest(toCode){
+  const myCode=getMyCode();
+  if(myCode===toCode)return;
+  // Lag vennskapsforespørsel begge veier
+  await sbFetch('/rest/v1/friendships','POST',{from_code:myCode,to_code:toCode,status:'accepted'});
+  await sbFetch('/rest/v1/friendships','POST',{from_code:toCode,to_code:myCode,status:'accepted'});
+}
+
+async function sbFetchMyFriends(){
+  const myCode=getMyCode();
+  // Hent alle som har meg som venn
+  const res=await sbFetch('/rest/v1/friendships?from_code=eq.'+encodeURIComponent(myCode)+'&status=eq.accepted&select=to_code');
+  if(!res||res.length===0)return[];
+  // Hent profiler for alle venner
+  const codes=res.map(r=>r.to_code);
+  const profiles=[];
+  for(const code of codes){
+    const p=await sbLookupFriend(code);
+    if(p)profiles.push(p);
+  }
+  return profiles;
 }
 
 // ── Challenge codes ──
@@ -2106,12 +2129,36 @@ function snapChallenge(){
 }
 
 function sendToApp(txt,platform){
-  navigator.clipboard.writeText(txt).catch(()=>{});
-  const mob=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  const urls={snap:'snapchat://',insta:'instagram://story-camera',tiktok:'tiktok://'};
   const names={snap:'Snapchat 👻',insta:'Instagram 📸',tiktok:'TikTok 🎵'};
-  toast('Kopiert! Åpner '+names[platform]+'...');
-  if(mob)setTimeout(()=>{window.location.href=urls[platform]||urls.snap;},500);
+  const urls={snap:'snapchat://',insta:'instagram://story-camera',tiktok:'tiktok://'};
+  const mob=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  // Kopier til clipboard
+  navigator.clipboard.writeText(txt).catch(()=>{});
+  // Vis popup med tekst og instruksjoner
+  const old=document.getElementById('share-popup');
+  if(old)old.remove();
+  const popup=document.createElement('div');
+  popup.id='share-popup';
+  popup.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
+  const appName=names[platform]||'Snap';
+  const appUrl=urls[platform]||'snapchat://';
+  popup.innerHTML='<div style="width:100%;max-width:430px;background:#1a1a1d;border-radius:28px 28px 0 0;padding:24px 20px 40px;border-top:1px solid rgba(255,255,255,.1);">'
+    +'<div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:6px;">Del med '+appName+'</div>'
+    +'<div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:16px;">Teksten er kopiert! Åpne '+appName+' og lim inn 📋</div>'
+    +'<div id="share-txt-box" style="background:#000;border-radius:14px;padding:14px 16px;margin-bottom:16px;font-size:13px;color:rgba(255,255,255,.8);line-height:1.6;white-space:pre-wrap;border:1px solid rgba(255,255,255,.1);">'+txt+'</div>'
+    +'<button id="share-copy-btn" style="width:100%;padding:16px;background:#ff2d55;color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;margin-bottom:10px;">📋 Kopier tekst</button>'
+    +(mob?'<button id="share-open-btn" style="width:100%;padding:14px;background:#222;color:#fff;border:1px solid rgba(255,255,255,.1);border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;">Åpne '+appName+' →</button>':'')
+    +'<button onclick="document.getElementById(\"share-popup\").remove()" style="width:100%;padding:13px;background:transparent;color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.1);border-radius:14px;font-size:14px;cursor:pointer;">Avbryt</button>'
+    +'</div>';
+  document.body.appendChild(popup);
+  document.getElementById('share-copy-btn').onclick=function(){
+    navigator.clipboard.writeText(txt).then(()=>{
+      this.textContent='✅ Kopiert!';
+      this.style.background='#34c759';
+    }).catch(()=>{this.textContent='Merk teksten og kopier manuelt';});
+  };
+  const openBtn=document.getElementById('share-open-btn');
+  if(openBtn)openBtn.onclick=function(){window.location.href=appUrl;};
 }
 
 // ══════════════════════════════════════════
@@ -2675,6 +2722,8 @@ async function addFriend(){
   setTimeout(()=>{hint.textContent='';hint.className='add-friend-hint';},3000);
   playSound('complete');confetti();
   renderFriends();
+  // Send vennskap til Supabase — begge ser hverandre
+  if(newFriend.real) sbSendFriendRequest(val);
 }
 
 function removeFriend(i){
@@ -2777,6 +2826,25 @@ if(PL.name&&PL.name!==''){
   LB[0].name=PL.name;LB[0].em=PL.emoji;LB[0].pts=PL.pts;LB[0].streak=PL.streak;
   addDemoFriendsIfEmpty();
   updateHeader();renderInstallBanner();renderSpecialBanner();renderDaily();renderProfile();renderLB();
+  // Last venner fra Supabase
+  setTimeout(async()=>{
+    const sbFriends=await sbFetchMyFriends();
+    if(sbFriends&&sbFriends.length>0){
+      sbFriends.forEach(p=>{
+        if(!PL.friends)PL.friends=[];
+        const exists=PL.friends.some(f=>f.code===p.friend_code);
+        if(!exists&&p.friend_code!==getMyCode()){
+          PL.friends.push({name:p.name,emoji:p.emoji||'🔥',code:p.friend_code,pts:p.pts||0,streak:p.streak||0,addedDate:new Date().toLocaleDateString('no'),real:true});
+        } else if(exists){
+          // Oppdater poeng og streak
+          const f=PL.friends.find(f=>f.code===p.friend_code);
+          if(f){f.pts=p.pts||0;f.streak=p.streak||0;}
+        }
+      });
+      saveData();
+      renderFriends();
+    }
+  },1000);
   const pending=PL.pending||[];
   if(pending.length>0){const nb=document.getElementById('nav-badge');if(nb){nb.style.display='flex';nb.textContent=pending.length;}}
 
