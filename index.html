@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -1109,12 +1110,56 @@ async function sbLookupFriend(code){
   return(res&&res.length>0)?res[0]:null;
 }
 
+function showFriendRequestPopup(profile, fromCode){
+  const old=document.getElementById('friend-req-popup');
+  if(old)old.remove();
+  const popup=document.createElement('div');
+  popup.id='friend-req-popup';
+  popup.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;';
+  popup.innerHTML='<div style="width:100%;max-width:380px;background:#1a1a1d;border-radius:24px;padding:28px 24px;text-align:center;border:1px solid rgba(255,255,255,.1);">'
+    +'<div style="font-size:54px;margin-bottom:10px;">'+profile.emoji+'</div>'
+    +'<div style="font-size:20px;font-weight:800;color:#fff;margin-bottom:6px;">'+profile.name+' vil bli venn!</div>'
+    +'<div style="font-size:13px;color:rgba(255,255,255,.4);margin-bottom:24px;">'+profile.name+' har utfordret deg og vil legge deg til som venn i NÅ</div>'
+    +'<button id="accept-btn" style="width:100%;padding:15px;background:#ff2d55;color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;margin-bottom:10px;">✅ Godta</button>'
+    +'<button id="decline-btn" style="width:100%;padding:13px;background:transparent;color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.1);border-radius:14px;font-size:14px;cursor:pointer;">Avslå</button>'
+    +'</div>';
+  document.body.appendChild(popup);
+  document.getElementById('accept-btn').onclick=async function(){
+    // Legg til lokalt
+    PL.friends.push({name:profile.name,emoji:profile.emoji||'🔥',code:fromCode,pts:profile.pts||0,streak:profile.streak||0,addedDate:new Date().toLocaleDateString('no'),real:true});
+    saveData();
+    // Godta i Supabase
+    await sbAcceptFriendRequest(fromCode);
+    popup.remove();
+    renderFriends();
+    toast('🎉 '+profile.name+' lagt til som venn!');
+    confetti();
+  };
+  document.getElementById('decline-btn').onclick=function(){
+    popup.remove();
+    toast('Venneforespørsel avslått');
+  };
+}
+
 async function sbSendFriendRequest(toCode){
   const myCode=getMyCode();
   if(myCode===toCode)return;
-  // Lag vennskapsforespørsel begge veier
-  await sbFetch('/rest/v1/friendships','POST',{from_code:myCode,to_code:toCode,status:'accepted'});
-  await sbFetch('/rest/v1/friendships','POST',{from_code:toCode,to_code:myCode,status:'accepted'});
+  // Send kun pending forespørsel — venter på godkjenning
+  await sbFetch('/rest/v1/friendships','POST',{from_code:myCode,to_code:toCode,status:'pending'});
+}
+
+async function sbAcceptFriendRequest(fromCode){
+  const myCode=getMyCode();
+  // Oppdater pending til accepted
+  await sbFetch('/rest/v1/friendships?from_code=eq.'+encodeURIComponent(fromCode)+'&to_code=eq.'+encodeURIComponent(myCode),'PATCH',{status:'accepted'});
+  // Lag den andre veien også
+  await sbFetch('/rest/v1/friendships','POST',{from_code:myCode,to_code:fromCode,status:'accepted'});
+}
+
+async function sbCheckPendingRequests(){
+  const myCode=getMyCode();
+  const res=await sbFetch('/rest/v1/friendships?to_code=eq.'+encodeURIComponent(myCode)+'&status=eq.pending&select=from_code');
+  return res||[];
 }
 
 async function sbFetchMyFriends(){
@@ -2102,21 +2147,20 @@ function afterCameraShare(){
 
 // ── INVITER VENN — sender utfordringen direkte ──
 function inviteFriend(method){
-  const code=S.code||PL.friendCode||'NÅ-???';
+  const myCode=getMyCode();
+  const challengeCode=S.code||PL.friendCode||'NÅ-???';
   const challenge=S.challenge||'en morsom utfordring';
-  const url='tsandvik2.github.io/naa-app2?c='+encodeURIComponent(code);
-  const txt=`👋 Jeg utfordrer deg på NÅ-appen!\n\n"${challenge}"\n\nKlarer du det? Trykk her:\n${url}\n\n#NåAppen`;
+  // Lenken inneholder BÅDE utfordring og din vennekode
+  const url='https://tsandvik2.github.io/naa-app2?c='+encodeURIComponent(challengeCode)+'&f='+encodeURIComponent(myCode);
+  const txt='👋 Jeg utfordrer deg på NÅ-appen!\n\n"'+challenge+'"\n\nKlarer du det? Trykk her:\n'+url+'\n\n#NåAppen';
 
-  // Lagre utfordringen i Supabase så venn får SAMME
-  sbSaveChallenge(code, challenge);
+  // Lagre utfordringen i Supabase
+  sbSaveChallenge(challengeCode, challenge);
 
+  sendToApp(txt, method==='sms'?'sms':method);
   if(method==='sms'){
     window.location.href='sms:?&body='+encodeURIComponent(txt);
     toast('Åpner Meldinger... 💬');
-  } else if(method==='snap'){
-    navigator.clipboard.writeText(txt).catch(()=>{});
-    setTimeout(()=>{window.location.href='snapchat://';},300);
-    toast('Kopiert! Åpner Snapchat 👻');
   }
 }
 
@@ -2826,6 +2870,21 @@ if(PL.name&&PL.name!==''){
   LB[0].name=PL.name;LB[0].em=PL.emoji;LB[0].pts=PL.pts;LB[0].streak=PL.streak;
   addDemoFriendsIfEmpty();
   updateHeader();renderInstallBanner();renderSpecialBanner();renderDaily();renderProfile();renderLB();
+  // Sjekk ventende venneforespørsler
+  setTimeout(async()=>{
+    const pending=await sbCheckPendingRequests();
+    if(pending&&pending.length>0){
+      for(const req of pending){
+        const profile=await sbLookupFriend(req.from_code);
+        if(profile){
+          if(!PL.friends)PL.friends=[];
+          const exists=PL.friends.some(f=>f.code===req.from_code);
+          if(!exists) showFriendRequestPopup(profile, req.from_code);
+        }
+      }
+    }
+  },2000);
+
   // Last venner fra Supabase
   setTimeout(async()=>{
     const sbFriends=await sbFetchMyFriends();
@@ -2848,12 +2907,24 @@ if(PL.name&&PL.name!==''){
   const pending=PL.pending||[];
   if(pending.length>0){const nb=document.getElementById('nav-badge');if(nb){nb.style.display='flex';nb.textContent=pending.length;}}
 
-  // Handle friend invite via URL: ?c=NÅ-ABC
+  // Handle friend invite via URL: ?c=NÅ-ABC&f=NÅ-XYZ
   const urlParams=new URLSearchParams(window.location.search);
   const inviteCode=urlParams.get('c');
+  const friendCode=urlParams.get('f');
   if(inviteCode){
     toast('👯 Venn har utfordret deg! Henter utfordring...');
     setTimeout(async()=>{
+      // Vis godta/avslå popup hvis f= finnes
+      if(friendCode&&friendCode!==getMyCode()){
+        const profile=await sbLookupFriend(friendCode);
+        if(profile){
+          if(!PL.friends)PL.friends=[];
+          const exists=PL.friends.some(f=>f.code===friendCode);
+          if(!exists){
+            showFriendRequestPopup(profile, friendCode);
+          }
+        }
+      }
       S.mood='Klar for galskap';S.time='30 min';S.players=1;
       const c=await joinCode(inviteCode);
       if(c)showChallenge(c);
