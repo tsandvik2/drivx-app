@@ -1066,7 +1066,7 @@ let videoBlob=null;
 const SB_URL='https://suppeutufgauakfycfjf.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cHBldXR1ZmdhdWFrZnljZmpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNjA3NjcsImV4cCI6MjA4ODkzNjc2N30.T1UzGToL2_SMmiXKj52iEi3SvfpfB3HDknFOlJo-IMc';
 
-async async function sbFetch(path,method='GET',body=null){
+async function sbFetch(path,method='GET',body=null){
   const opts={
     method,
     headers:{
@@ -1086,7 +1086,7 @@ async async function sbFetch(path,method='GET',body=null){
 }
 
 // ── Profiles ──
-async async function sbSaveProfile(){
+async function sbSaveProfile(){
   if(!PL.name)return;
   const code=getMyCode();
   const data={
@@ -1137,7 +1137,7 @@ async function sbMarkCompleted(code){
 }
 
 // ── Leaderboard from Supabase ──
-aasync function sbFetchLeaderboard(){
+async function sbFetchLeaderboard(){
   const res=await sbFetch('/rest/v1/profiles?select=name,emoji,pts,streak&order=pts.desc&limit=10');
   return res||[];
 }
