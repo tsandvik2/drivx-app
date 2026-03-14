@@ -604,6 +604,22 @@ export function HomeClient({ userId }: HomeClientProps) {
             </button>
           )}
 
+          {/* Winner task */}
+          {currentChallenge.winner && (
+            <div
+              className="rounded-2xl py-4 px-[18px] text-center"
+              style={{
+                background: "rgba(255,214,10,.05)",
+                border: "1.5px solid rgba(255,214,10,.22)",
+              }}
+            >
+              <div className="text-[10px] font-extrabold tracking-widest uppercase text-[#ffd60a] mb-2">
+                🏆 Premie for vinneren
+              </div>
+              <div className="text-base font-bold leading-snug">{currentChallenge.winner}</div>
+            </div>
+          )}
+
           {/* Punishment */}
           {currentChallenge.punishment && (
             <div

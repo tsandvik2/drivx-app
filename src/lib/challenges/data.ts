@@ -2,7 +2,8 @@ export interface ChallengeEntry {
   text: string;
   cat: string;
   cam?: boolean;
-  p?: string; // punishment
+  p?: string; // punishment (loser)
+  w?: string; // winner task
 }
 
 export interface ChallengeDB {
@@ -37,16 +38,16 @@ export const CHALLENGES: ChallengeDB = {
       { text: "Skriv ned fem rare ting du har gjort denne uken 📝", cat: "kreativ" },
     ],
     group: [
-      { text: "Alle lager et ansikt av maten sin – send bilde til gjengen. Stem på beste! 🍽️", cat: "kreativ", cam: true, p: "Taperen gjør en kylling-dans og filmer det 🐔" },
-      { text: "Hvem holder rett ansikt lengst mens de andre lager grimaser? 😐", cat: "sosial", cam: true, p: "Taperen gjør sin beste kylling-dans foran alle 🐔" },
-      { text: "Alle skriver en 4-linjes rap om personen til høyre og leser høyt 🎤", cat: "kreativ", p: "Dårligste rapper synger sin rap som voice memo til alle 🎵" },
-      { text: "Hvem finner den rareste tingen i lommen sin? Alle viser frem! 👜", cat: "sosial", cam: true, p: "Den med kjedeligst gjenstand bærer den som halskjede i 30 min 😄" },
-      { text: "Alle tegner hverandre – 60 sekunder per portrett. Vis frem og stem i gjengen! 🖼️", cat: "kreativ", cam: true, p: "Dårligste kunstner bruker bildet som profilbilde i 12 timer 😂" },
-      { text: "Alle poserer som en kjent statue i 30 sekunder – stem på best! 🗿", cat: "kreativ", cam: true, p: "Taperen er DJ resten av kvelden 🎵" },
-      { text: "Synkroniser et hopp og ta bilde akkurat idet alle er i luften 🦘", cat: "fysisk", cam: true, p: "Den som ikke hopper høyt nok gjør 10 squats 🏋️" },
-      { text: "Alle lager verdens beste grimase – stem på hvem som vinner! 😜", cat: "sosial", cam: true, p: "Den med kjedeligst grimase gjør en kylling-dans 🐔" },
-      { text: "Alle skriver ned en morsom fakta om seg selv på papir, blander og leser opp 🤫", cat: "sosial", p: "Alle gjetter hvem som eier hvilken fakta 🕵️" },
-      { text: "Hvem kan balansere flest ting på hodet? Film det! 🎩", cat: "fysisk", cam: true, p: "Taperen bærer én ting på hodet i 10 minutter 😂" },
+      { text: "Alle lager et ansikt av maten sin – send bilde til gjengen. Stem på beste! 🍽️", cat: "kreativ", cam: true, p: "Taperen gjør en kylling-dans og filmer det 🐔", w: "Vinneren velger neste utfordring for gjengen 👑" },
+      { text: "Hvem holder rett ansikt lengst mens de andre lager grimaser? 😐", cat: "sosial", cam: true, p: "Taperen gjør sin beste kylling-dans foran alle 🐔", w: "Vinneren får be én person i gjengen gjøre akkurat hva de vil 😈" },
+      { text: "Alle skriver en 4-linjes rap om personen til høyre og leser høyt 🎤", cat: "kreativ", p: "Dårligste rapper synger sin rap som voice memo til alle 🎵", w: "Beste rapper får gratis skryt av alle – én ting per person 🏆" },
+      { text: "Hvem finner den rareste tingen i lommen sin? Alle viser frem! 👜", cat: "sosial", cam: true, p: "Den med kjedeligst gjenstand bærer den som halskjede i 30 min 😄", w: "Vinneren velger neste aktivitet for gjengen 🎯" },
+      { text: "Alle tegner hverandre – 60 sekunder per portrett. Vis frem og stem i gjengen! 🖼️", cat: "kreativ", cam: true, p: "Dårligste kunstner bruker bildet som profilbilde i 12 timer 😂", w: "Beste kunstner tegner et offisielt gruppeportrett som alle lagrer 🖼️" },
+      { text: "Alle poserer som en kjent statue i 30 sekunder – stem på best! 🗿", cat: "kreativ", cam: true, p: "Taperen er DJ resten av kvelden 🎵", w: "Vinneren er kveldets seremonimester og bestemmer rekkefølgen på alt 👑" },
+      { text: "Synkroniser et hopp og ta bilde akkurat idet alle er i luften 🦘", cat: "fysisk", cam: true, p: "Den som ikke hopper høyt nok gjør 10 squats 🏋️", w: "Høyeste hopper velger neste utfordring OG slipper den 🎯" },
+      { text: "Alle lager verdens beste grimase – stem på hvem som vinner! 😜", cat: "sosial", cam: true, p: "Den med kjedeligst grimase gjør en kylling-dans 🐔", w: "Vinneren får lov til å gi et 'dristighetsoppdrag' til én person 😈" },
+      { text: "Alle skriver ned en morsom fakta om seg selv på papir, blander og leser opp 🤫", cat: "sosial", p: "Alle gjetter hvem som eier hvilken fakta 🕵️", w: "Den med mest overraskende fakta velger neste utfordring 🌟" },
+      { text: "Hvem kan balansere flest ting på hodet? Film det! 🎩", cat: "fysisk", cam: true, p: "Taperen bærer én ting på hodet i 10 minutter 😂", w: "Vinneren får alle til å bære noe på hodet i 5 minutter 👑" },
     ],
   },
   medium: {
@@ -68,11 +69,11 @@ export const CHALLENGES: ChallengeDB = {
       { text: "Lag et portrett av en venn kun med emojier på 2 minutter og send det 🎨", cat: "kreativ" },
     ],
     group: [
-      { text: "En person ringer en butikk og spør seriøst om de har usynlig tape 📞", cat: "sosial", p: "Taperen ringer ny butikk med enda rimeligere spørsmål 😂" },
-      { text: "Alle lager en 15-sekunders stumfilm med det rundt dere. Stem på beste! 🎬", cat: "kreativ", cam: true, p: "Dårligste regissør spiller statist i neste film 🎭" },
-      { text: "Send til den 7. i kontaktlisten: 'Du vet hva du har gjort.' Vent på svar 😂", cat: "sosial", p: "Den som ler først sender samme melding til to nye kontakter 💀" },
-      { text: "Alle bytter telefon i 3 minutter og sender én melding til tilfeldig kontakt 📱", cat: "kaos", p: "Den som sender noe kjedelig velger neste utfordring 🎯" },
-      { text: "Gjengen lager salg-pitch for et hverdagsobjekt på 5 min – stem! 💼", cat: "kreativ", cam: true, p: "Dårligste selger bruker objektet som hatt hele kvelden 🎩" },
+      { text: "En person ringer en butikk og spør seriøst om de har usynlig tape 📞", cat: "sosial", p: "Taperen ringer ny butikk med enda rimeligere spørsmål 😂", w: "Beste skuespiller velger hvem som ringer neste og hva de sier 🎤" },
+      { text: "Alle lager en 15-sekunders stumfilm med det rundt dere. Stem på beste! 🎬", cat: "kreativ", cam: true, p: "Dårligste regissør spiller statist i neste film 🎭", w: "Beste regissør instruerer en remake med alle som skuespillere 🎬" },
+      { text: "Send til den 7. i kontaktlisten: 'Du vet hva du har gjort.' Vent på svar 😂", cat: "sosial", p: "Den som ler først sender samme melding til to nye kontakter 💀", w: "Den siste som ler velger neste utfordring 😎" },
+      { text: "Alle bytter telefon i 3 minutter og sender én melding til tilfeldig kontakt 📱", cat: "kaos", p: "Den som sender noe kjedelig velger neste utfordring 🎯", w: "Den med kuleste melding får alle til å like og kommentere innlegget sitt 👏" },
+      { text: "Gjengen lager salg-pitch for et hverdagsobjekt på 5 min – stem! 💼", cat: "kreativ", cam: true, p: "Dårligste selger bruker objektet som hatt hele kvelden 🎩", w: "Beste selger velger neste utfordring og slipper straff i neste runde 🏆" },
     ],
   },
   wild: {
@@ -89,11 +90,11 @@ export const CHALLENGES: ChallengeDB = {
       { text: "Ring en pizza-restaurant og spør om de leverer til månen 🌕", cat: "kaos" },
     ],
     group: [
-      { text: "En i gjengen er berømt – resten er fans. Dere møtes tilfeldig ute. Spill det ut! 🌟", cat: "kaos", cam: true, p: "Den som bryter karakter bærer tittelen 'Amatørskuespiller' resten av dagen 🎭" },
-      { text: "Alle lager synkronisert dans til tilfeldig sang. 5 min å øve – film og post! 💃", cat: "kaos", cam: true, p: "Den med dårligst timing ber gjengen om tilgivelse overdramatisk 😂" },
-      { text: "En person er 'ja-personen' – sier ja til alt de andre foreslår i 10 minutter! 😈", cat: "kaos", p: "Nekter ja-personen dobles varigheten og alle bytter roller 😂" },
-      { text: "Alle bytter personlighet med personen til høyre i 15 minutter. Inn i karakter NÅ! 🎭", cat: "kaos", cam: true, p: "Den som bryter ut av karakteren raskest velger neste utfordring 🎯" },
-      { text: "Flash mob! Alle fryser på signal i et offentlig rom i 30 sekunder 🧊", cat: "kaos", cam: true, p: "Den som beveger seg velger neste utfordring 🎯" },
+      { text: "En i gjengen er berømt – resten er fans. Dere møtes tilfeldig ute. Spill det ut! 🌟", cat: "kaos", cam: true, p: "Den som bryter karakter bærer tittelen 'Amatørskuespiller' resten av dagen 🎭", w: "Beste skuespiller velger hvem som er 'berømt' i neste runde 🌟" },
+      { text: "Alle lager synkronisert dans til tilfeldig sang. 5 min å øve – film og post! 💃", cat: "kaos", cam: true, p: "Den med dårligst timing ber gjengen om tilgivelse overdramatisk 😂", w: "Beste danser koreograferer neste dans og velger sang 💃" },
+      { text: "En person er 'ja-personen' – sier ja til alt de andre foreslår i 10 minutter! 😈", cat: "kaos", p: "Nekter ja-personen dobles varigheten og alle bytter roller 😂", w: "Den som finner på det villeste oppdraget til ja-personen velger neste utfordring 🏆" },
+      { text: "Alle bytter personlighet med personen til høyre i 15 minutter. Inn i karakter NÅ! 🎭", cat: "kaos", cam: true, p: "Den som bryter ut av karakteren raskest velger neste utfordring 🎯", w: "Beste skuespiller velger én ting gjengen skal gjøre akkurat nå 🎭" },
+      { text: "Flash mob! Alle fryser på signal i et offentlig rom i 30 sekunder 🧊", cat: "kaos", cam: true, p: "Den som beveger seg velger neste utfordring 🎯", w: "Den som holder lengst velger neste sted og signal for neste freeze 🏆" },
     ],
   },
   safe: {
@@ -108,11 +109,11 @@ export const CHALLENGES: ChallengeDB = {
       { text: "Balanser en ting på hodet og gå fra ett rom til et annet 🎩", cat: "fysisk" },
     ],
     group: [
-      { text: "Alle lager det morsomste ansiktet de kan – stem i gjengen! 😜", cat: "sosial", cam: true, p: "Kjedeligste ansikt gjør en kylling-dans 🐔" },
-      { text: "Lag en synkronisert dans på 30 sekunder – film det! 💃", cat: "kreativ", cam: true, p: "Den med dårligst timing velger neste utfordring 😅" },
-      { text: "Alle poserer som berømte statuer – hvem er best? 🗿", cat: "kreativ", cam: true, p: "Taperen er DJ resten av kvelden 🎵" },
-      { text: "Lag en menneskekjede og gå ti skritt uten å miste grepet 🤝", cat: "fysisk", p: "Den som slipper velger neste utfordring 🎯" },
-      { text: "Alle skriker favorittlåten sin samtidig i 10 sekunder 🎤", cat: "sosial", cam: true, p: "Den med lavest volum synger alene etterpå 🎵" },
+      { text: "Alle lager det morsomste ansiktet de kan – stem i gjengen! 😜", cat: "sosial", cam: true, p: "Kjedeligste ansikt gjør en kylling-dans 🐔", w: "Vinneren velger neste aktivitet for gjengen 🏆" },
+      { text: "Lag en synkronisert dans på 30 sekunder – film det! 💃", cat: "kreativ", cam: true, p: "Den med dårligst timing velger neste utfordring 😅", w: "Beste danser koreograferer den neste gruppedansen 💃" },
+      { text: "Alle poserer som berømte statuer – hvem er best? 🗿", cat: "kreativ", cam: true, p: "Taperen er DJ resten av kvelden 🎵", w: "Vinneren bestemmer neste tema for posering og hvem som demonstrerer 🗿" },
+      { text: "Lag en menneskekjede og gå ti skritt uten å miste grepet 🤝", cat: "fysisk", p: "Den som slipper velger neste utfordring 🎯", w: "De som holdt grepet lengst velger neste fysiske utfordring 🏆" },
+      { text: "Alle skriker favorittlåten sin samtidig i 10 sekunder 🎤", cat: "sosial", cam: true, p: "Den med lavest volum synger alene etterpå 🎵", w: "Høyeste stemme velger neste sang alle synger sammen 🎶" },
     ],
   },
 };
@@ -129,6 +130,7 @@ export interface SelectedChallenge {
   cat: string;
   cam: boolean;
   punishment: string | null;
+  winner: string | null;
   difficulty: "easy" | "medium" | "wild" | "safe";
   timeMinutes: number;
 }
@@ -166,6 +168,7 @@ export function pickChallenge(opts: ChallengeOptions): SelectedChallenge {
     cat: entry.cat,
     cam: !!entry.cam,
     punishment: entry.p ?? null,
+    winner: entry.w ?? null,
     difficulty,
     timeMinutes,
   };
