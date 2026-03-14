@@ -570,8 +570,8 @@ html,body{height:100%;background:#000;background:var(--bg);color:var(--text);fon
   <!-- SETUP -->
   <div class="screen active" id="s-setup">
     <div id="install-wrap"></div>
-    <div id="special-banner"></div>
-    <div id="daily-wrap"></div>
+    <div id="special-banner" style="display:none"></div>
+    <div id="daily-wrap" style="display:none"></div>
     <div class="wiz-steps">
       <div class="ws on" id="ws0"></div><div class="ws" id="ws1"></div><div class="ws" id="ws2"></div>
     </div>
@@ -846,6 +846,16 @@ html,body{height:100%;background:#000;background:var(--bg);color:var(--text);fon
     <button class="btn btn-ghost" style="color:var(--red);border-color:rgba(255,45,85,.2);margin-top:4px;" onclick="if(confirm('Nullstill alt og se startsiden?')){localStorage.clear();location.reload();}">🔄 Se startside igjen</button>
   </div>
 
+  <!-- DAGENS -->
+  <div class="screen" id="s-today">
+    <div style="padding:48px 0 8px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:2px;color:var(--text);">DAGENS</div>
+      <div style="font-size:13px;color:var(--muted);font-weight:600;">Én utfordring per dag</div>
+    </div>
+    <div id="today-daily-wrap"></div>
+    <div id="today-special-wrap"></div>
+  </div>
+
   <!-- FRIENDS -->
   <div class="screen" id="s-friends">
     <div class="my-code-card">
@@ -891,6 +901,7 @@ html,body{height:100%;background:#000;background:var(--bg);color:var(--text);fon
 <!-- ══ NAV ══ -->
 <nav class="nav" id="main-nav" style="display:none">
   <button class="nav-btn on" id="n0" onclick="navTo('s-setup','n0')"><span class="ni">🎯</span>Utfordring</button>
+  <button class="nav-btn" id="n4" onclick="navTo('s-today','n4')"><span class="ni">📅</span>Dagens</button>
   <button class="nav-btn" id="n1" onclick="navTo('s-lb','n1')"><span class="ni">🏆</span>Toppen</button>
   <button class="nav-btn" id="n3" onclick="navTo('s-friends','n3')"><span class="ni">👯</span>Venner<span class="nav-badge" id="nav-badge" style="display:none"></span></button>
   <button class="nav-btn" id="n2" onclick="navTo('s-profile','n2')"><span class="ni">🏅</span>Profil</button>
@@ -1666,7 +1677,7 @@ function finishOnboarding(){
   document.querySelectorAll('.ob-screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('main-app').style.display='flex';
   document.getElementById('main-nav').style.display='flex';
-  updateHeader();renderInstallBanner();renderSpecialBanner();renderDaily();renderProfile();renderLB();
+  updateHeader();renderInstallBanner();renderSpecialBanner();renderDaily();renderProfile();renderLB();renderTodayScreen();
   window.scrollTo({top:0,behavior:'smooth'});
   setTimeout(()=>showInstallHint(),4000);
 }
@@ -1720,6 +1731,14 @@ function getCountdown(){
   const diff=midnight-now;
   return Math.floor(diff/3600000)+'t '+Math.floor((diff%3600000)/60000)+'m';
 }
+function renderTodayScreen(){
+  // Kopier daily og special til today-screen
+  const dw=document.getElementById('today-daily-wrap');
+  const sw=document.getElementById('today-special-wrap');
+  if(dw)dw.innerHTML=document.getElementById('daily-wrap').innerHTML||'';
+  if(sw)sw.innerHTML=document.getElementById('special-banner').innerHTML||'';
+}
+
 function renderDaily(){
   const el=document.getElementById('daily-wrap');
   const d=getDailyChallenge();
@@ -2955,7 +2974,7 @@ if(PL.name&&PL.name!==''){
   document.getElementById('main-nav').style.display='flex';
   LB[0].name=PL.name;LB[0].em=PL.emoji;LB[0].pts=PL.pts;LB[0].streak=PL.streak;
   addDemoFriendsIfEmpty();
-  updateHeader();renderInstallBanner();renderSpecialBanner();renderDaily();renderProfile();renderLB();
+  updateHeader();renderInstallBanner();renderSpecialBanner();renderDaily();renderProfile();renderLB();renderTodayScreen();
   // Sjekk ventende venneforespørsler
   setTimeout(async()=>{
     const pending=await sbCheckPendingRequests();
