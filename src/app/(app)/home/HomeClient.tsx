@@ -10,6 +10,8 @@ import { WizardChip } from "@/components/challenge/WizardChip";
 import { ChallengeCard } from "@/components/challenge/ChallengeCard";
 import { CameraCapture } from "@/components/challenge/CameraCapture";
 import { ShareSheet } from "@/components/challenge/ShareSheet";
+import { FriendSelector } from "@/components/challenge/FriendSelector";
+import { PunishmentScreen } from "@/components/challenge/PunishmentScreen";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { LoadingDots } from "@/components/shared/LoadingDots";
 import { createClient } from "@/lib/supabase/client";
@@ -25,6 +27,7 @@ type AppScreen =
   | "countdown"
   | "flip"
   | "challenge"
+  | "punishment"
   | "done";
 
 const LOAD_MESSAGES = [
@@ -41,14 +44,17 @@ export function HomeClient({ userId }: HomeClientProps) {
     wizard,
     currentChallenge,
     proofPhotoUrl,
+    hasShared,
     onboardingComplete,
     setWizardMood,
     setWizardTime,
     setWizardPlayers,
     setWizardStep,
+    setSelectedFriends,
     resetWizard,
     setCurrentChallenge,
     setProofPhotoUrl,
+    setHasShared,
     completeChallenge,
   } = useAppStore();
 
@@ -63,9 +69,11 @@ export function HomeClient({ userId }: HomeClientProps) {
   const [timerMax, setTimerMax] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
   const [timerExpired, setTimerExpired] = useState(false);
+  const [groupSessionId, setGroupSessionId] = useState<string | null>(null);
 
-  const wizardSteps = ["setup-mood", "setup-time", "setup-players"] as const;
   const currentStep = wizard.step;
+  const isGroup = currentChallenge?.isGroup ?? false;
+  const isSolo = !isGroup;
 
   // Timer logic
   useEffect(() => {
@@ -94,6 +102,7 @@ export function HomeClient({ userId }: HomeClientProps) {
     setCurrentChallenge(challenge);
     setHasProof(false);
     setProofPhotoUrl(null);
+    setHasShared(false);
 
     // Show loading
     setScreen("loading");
@@ -107,7 +116,7 @@ export function HomeClient({ userId }: HomeClientProps) {
       clearInterval(msgInterval);
       setScreen("reveal");
     }, 2000);
-  }, [wizard, profile.ageGroup, setCurrentChallenge, setProofPhotoUrl]);
+  }, [wizard, profile.ageGroup, setCurrentChallenge, setProofPhotoUrl, setHasShared]);
 
   function startRevealCountdown() {
     setScreen("countdown");
@@ -141,13 +150,40 @@ export function HomeClient({ userId }: HomeClientProps) {
     setProofPhotoUrl(photoDataUrl);
     setHasProof(true);
     setShowProofCamera(false);
-    toast.success("Bevis tatt! Nå kan du markere som fullført 🎉");
+    toast.success("Bevis tatt! 📸");
+  }
+
+  async function handleShareToSocial(platform: "snap" | "insta") {
+    const text = `Jeg fullførte NÅ-utfordringen: "${currentChallenge?.text}" 🔥 Last ned NÅ-appen!`;
+    await navigator.clipboard?.writeText(text).catch(() => {});
+
+    if (platform === "snap") {
+      window.location.href = "snapchat://";
+    } else {
+      window.location.href = "instagram://camera";
+    }
+
+    // Mark as shared after attempting to open app
+    setHasShared(true);
+    setTimeout(() => {
+      if (!document.hidden) {
+        toast.info(`Åpner ${platform === "snap" ? "Snapchat" : "Instagram"} — lim inn teksten!`);
+      }
+    }, 1000);
   }
 
   async function handleComplete() {
     if (!currentChallenge) return;
-    if (currentChallenge.cam && !hasProof) {
+
+    // Solo: require photo proof for cam challenges
+    if (isSolo && currentChallenge.cam && !hasProof) {
       toast.error("Ta bevisbildet først 📸");
+      return;
+    }
+
+    // Solo: require sharing
+    if (isSolo && !hasShared) {
+      toast.error("Del på Snap eller Insta først! 📲");
       return;
     }
 
@@ -174,8 +210,43 @@ export function HomeClient({ userId }: HomeClientProps) {
       }
     }
 
-    // Save completion to Supabase
-    if (userId) {
+    // Group challenge: create group session and show punishment
+    if (isGroup) {
+      try {
+        const supabase = createClient();
+        const participantIds = wizard.selectedFriends.map((f) => f.id);
+
+        const { data: session } = await supabase
+          .from("group_sessions")
+          .insert({
+            host_id: userId,
+            challenge_text: currentChallenge.text,
+            challenge_difficulty: currentChallenge.difficulty,
+            participant_ids: participantIds,
+            punishment_text: currentChallenge.punishment,
+            proof_url: uploadedUrl,
+            pts_earned: 10,
+          })
+          .select("id")
+          .single();
+
+        if (session) {
+          setGroupSessionId(session.id);
+        }
+      } catch (err) {
+        console.error("Group session error:", err);
+      }
+
+      // If there's a punishment, show the punishment screen
+      if (currentChallenge.punishment && wizard.selectedFriends.length > 0) {
+        completeChallenge(10, currentChallenge.text, currentChallenge.cat === "kreativ" ? "🎨" : "🎯");
+        setScreen("punishment");
+        return;
+      }
+    }
+
+    // Solo: save completion to Supabase
+    if (isSolo && userId) {
       try {
         const supabase = createClient();
         await supabase.from("completions").insert({
@@ -184,11 +255,9 @@ export function HomeClient({ userId }: HomeClientProps) {
           photo_url: uploadedUrl,
           pts_earned: 10,
         });
-        // Update profile pts and streak
-        const newPts = profile.pts + 10;
         await supabase
           .from("profiles")
-          .update({ pts: newPts, done_count: profile.done + 1 })
+          .update({ pts: profile.pts + 10, done_count: profile.done + 1 })
           .eq("id", userId);
       } catch (err) {
         console.error("Save completion error:", err);
@@ -197,6 +266,28 @@ export function HomeClient({ userId }: HomeClientProps) {
 
     completeChallenge(10, currentChallenge.text, currentChallenge.cat === "kreativ" ? "🎨" : "🎯");
     setScreen("done");
+  }
+
+  async function handlePunishmentConfirm(loserId: string | null) {
+    // Call the RPC to complete the group session and award points to all
+    if (groupSessionId) {
+      try {
+        const supabase = createClient();
+        await supabase.rpc("complete_group_session", {
+          session_id: groupSessionId,
+          loser: loserId,
+          proof: proofPhotoUrl,
+        });
+      } catch (err) {
+        console.error("Complete group session error:", err);
+        // Fallback: update host manually if RPC fails
+      }
+    }
+    setScreen("done");
+  }
+
+  function handlePunishmentSkip() {
+    handlePunishmentConfirm(null);
   }
 
   function skipChallenge() {
@@ -267,12 +358,13 @@ export function HomeClient({ userId }: HomeClientProps) {
 
           {/* Wizard steps progress */}
           <div className="flex gap-1.5">
-            {[0, 1, 2].map((i) => (
+            {[0, 1, 2, 3].map((i) => (
               <div
                 key={i}
                 className="h-[3px] rounded-full transition-all duration-300"
                 style={{
                   flex: currentStep === i ? 2.5 : 1,
+                  display: i === 3 && currentStep < 3 ? "none" : "block",
                   background:
                     currentStep > i
                       ? "#00e676"
@@ -375,7 +467,13 @@ export function HomeClient({ userId }: HomeClientProps) {
                     selected={wizard.players === opt.value}
                     onClick={() => {
                       setWizardPlayers(opt.value);
-                      setTimeout(startChallenge, 300);
+                      if (opt.value === 1) {
+                        // Solo: go straight to challenge
+                        setTimeout(startChallenge, 300);
+                      } else {
+                        // Group: go to friend selector (step 3)
+                        setTimeout(() => setWizardStep(3), 300);
+                      }
                     }}
                     animationDelay={`${i * 0.4}s`}
                   />
@@ -391,17 +489,30 @@ export function HomeClient({ userId }: HomeClientProps) {
             </div>
           )}
 
+          {/* Step 3: Friend selector (group only) */}
+          {currentStep === 3 && (
+            <FriendSelector
+              userId={userId}
+              selectedFriends={wizard.selectedFriends}
+              onSelect={setSelectedFriends}
+              onConfirm={startChallenge}
+              onBack={() => setWizardStep(2)}
+            />
+          )}
+
           {/* Join pill */}
-          <button
-            onClick={() => router.push("/friends")}
-            className="flex items-center justify-center gap-2 rounded-2xl py-3.5 px-3.5 font-bold text-sm text-[rgba(235,235,245,0.8)] transition-all active:scale-[0.97] w-full"
-            style={{
-              background: "#111118",
-              border: "1.5px solid rgba(255,255,255,0.063)",
-            }}
-          >
-            👯 Fått en kode fra en venn? Trykk her!
-          </button>
+          {currentStep < 3 && (
+            <button
+              onClick={() => router.push("/friends")}
+              className="flex items-center justify-center gap-2 rounded-2xl py-3.5 px-3.5 font-bold text-sm text-[rgba(235,235,245,0.8)] transition-all active:scale-[0.97] w-full"
+              style={{
+                background: "#111118",
+                border: "1.5px solid rgba(255,255,255,0.063)",
+              }}
+            >
+              👯 Fått en kode fra en venn? Trykk her!
+            </button>
+          )}
         </div>
       )}
 
@@ -455,6 +566,13 @@ export function HomeClient({ userId }: HomeClientProps) {
             }}
           >
             START UTFORDRING
+          </button>
+          <button
+            onClick={backToSetup}
+            className="w-full mt-2.5 py-3 rounded-2xl font-bold text-[15px] text-[#55556a] transition-all active:scale-[0.97]"
+            style={{ background: "transparent", border: "1.5px solid rgba(255,255,255,0.063)" }}
+          >
+            ← Tilbake
           </button>
         </div>
       )}
@@ -585,6 +703,28 @@ export function HomeClient({ userId }: HomeClientProps) {
         >
           <ChallengeCard challenge={currentChallenge} />
 
+          {/* Group participants */}
+          {isGroup && wizard.selectedFriends.length > 0 && (
+            <div
+              className="rounded-2xl py-3.5 px-[18px]"
+              style={{ background: "#111118", border: "1.5px solid rgba(255,255,255,0.063)" }}
+            >
+              <div className="text-[10px] font-extrabold tracking-widest uppercase text-[#55556a] mb-2">
+                👥 Deltakere
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <span className="text-xs font-bold bg-white/5 rounded-lg px-2.5 py-1.5 text-white">
+                  👑 {profile.name} (deg)
+                </span>
+                {wizard.selectedFriends.map((f) => (
+                  <span key={f.id} className="text-xs font-bold bg-white/5 rounded-lg px-2.5 py-1.5 text-[rgba(235,235,245,0.8)]">
+                    {f.emoji} {f.username}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Camera button */}
           {currentChallenge.cam && !showCamera && (
             <button
@@ -604,23 +744,7 @@ export function HomeClient({ userId }: HomeClientProps) {
             </button>
           )}
 
-          {/* Winner task */}
-          {currentChallenge.winner && (
-            <div
-              className="rounded-2xl py-4 px-[18px] text-center"
-              style={{
-                background: "rgba(255,214,10,.05)",
-                border: "1.5px solid rgba(255,214,10,.22)",
-              }}
-            >
-              <div className="text-[10px] font-extrabold tracking-widest uppercase text-[#ffd60a] mb-2">
-                🏆 Premie for vinneren
-              </div>
-              <div className="text-base font-bold leading-snug">{currentChallenge.winner}</div>
-            </div>
-          )}
-
-          {/* Punishment */}
+          {/* Punishment preview for group */}
           {currentChallenge.punishment && (
             <div
               className="rounded-2xl py-4 px-[18px] text-center"
@@ -668,85 +792,141 @@ export function HomeClient({ userId }: HomeClientProps) {
             </div>
           )}
 
-          {/* Proof / completion bar */}
-          {currentChallenge.cam ? (
+          {/* ── SOLO COMPLETION FLOW ── */}
+          {isSolo && (
             <div
               className="rounded-2xl p-[18px]"
               style={{ background: "#111118", border: "1.5px solid rgba(255,255,255,0.063)" }}
             >
-              <div className="flex items-center gap-2">
-                {/* Step 1 */}
-                <div className="flex items-center gap-2.5 flex-1">
+              <div className="text-[10px] font-extrabold tracking-widest uppercase text-[#55556a] mb-3">
+                📋 Fullfør utfordringen
+              </div>
+
+              {/* Step indicators */}
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center gap-2 flex-1">
                   <div
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-extrabold flex-shrink-0 transition-all"
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-extrabold flex-shrink-0"
                     style={{
-                      background: hasProof ? "#00e676" : "linear-gradient(135deg, #ff2d55, #ff6b00)",
+                      background: currentChallenge.cam
+                        ? (hasProof ? "#00e676" : "linear-gradient(135deg, #ff2d55, #ff6b00)")
+                        : "#00e676",
                       color: "#fff",
                     }}
                   >
-                    {hasProof ? "✓" : "1"}
+                    {currentChallenge.cam ? (hasProof ? "✓" : "1") : "✓"}
                   </div>
-                  <div>
-                    <div className="text-sm font-extrabold leading-tight">Ta bevisbildet 📸</div>
-                    <div className="text-[11px] text-[#55556a] mt-0.5">
-                      {hasProof ? "Bilde tatt!" : "Kamera åpnes automatisk"}
-                    </div>
-                  </div>
+                  <span className="text-xs font-bold text-[#55556a]">
+                    {currentChallenge.cam ? (hasProof ? "Bilde tatt" : "Ta bilde") : "Gjør utfordringen"}
+                  </span>
                 </div>
-                <div className="text-xl text-[#55556a] flex-shrink-0">›</div>
-                {/* Step 2 */}
-                <div className="flex items-center gap-2.5 flex-1">
+                <div className="text-[#55556a]">→</div>
+                <div className="flex items-center gap-2 flex-1">
                   <div
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-extrabold flex-shrink-0 transition-all"
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-extrabold flex-shrink-0"
                     style={{
-                      background: hasProof ? "linear-gradient(135deg, #ff2d55, #ff6b00)" : "rgba(255,255,255,.08)",
-                      color: hasProof ? "#fff" : "#55556a",
+                      background: hasShared ? "#00e676" : ((!currentChallenge.cam || hasProof) ? "linear-gradient(135deg, #ff2d55, #ff6b00)" : "rgba(255,255,255,.08)"),
+                      color: hasShared ? "#fff" : ((!currentChallenge.cam || hasProof) ? "#fff" : "#55556a"),
                     }}
                   >
-                    2
+                    {hasShared ? "✓" : "2"}
                   </div>
-                  <div>
-                    <div className="text-sm font-extrabold leading-tight">Marker fullført ✓</div>
-                    <div className="text-[11px] text-[#55556a] mt-0.5">{hasProof ? "Klar!" : "Ta bilde først"}</div>
-                  </div>
+                  <span className="text-xs font-bold text-[#55556a]">
+                    {hasShared ? "Delt!" : "Del på SoMe"}
+                  </span>
                 </div>
               </div>
 
-              <div className="flex gap-2 mt-3">
+              {/* Photo button (if needed) */}
+              {currentChallenge.cam && !hasProof && (
                 <button
                   onClick={() => setShowProofCamera(true)}
-                  className="flex-1 py-3.5 rounded-2xl text-sm font-extrabold active:scale-[0.97] transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3.5 rounded-2xl text-sm font-extrabold active:scale-[0.97] transition-all flex items-center justify-center gap-2 mb-2"
                   style={{
                     background: "linear-gradient(135deg, #00f0ff, #0099cc)",
                     color: "#fff",
                   }}
                 >
-                  📸 Ta bilde
+                  📸 Ta bevisbilde
                 </button>
-                <button
-                  onClick={handleComplete}
-                  disabled={!hasProof}
-                  className="flex-1 py-3.5 rounded-2xl text-sm font-extrabold active:scale-[0.97] transition-all flex items-center justify-center gap-2 disabled:opacity-35 disabled:pointer-events-none"
-                  style={{
-                    background: "linear-gradient(135deg, #00e676, #22a03a)",
-                    color: "#fff",
-                  }}
-                >
-                  ✓ Fullført!
-                </button>
-              </div>
+              )}
+
+              {currentChallenge.cam && hasProof && !hasShared && (
+                <div className="text-xs text-[#00e676] font-bold mb-2 text-center">Bilde tatt! Nå del det 👇</div>
+              )}
+
+              {/* Share buttons (required for solo) */}
+              {(!currentChallenge.cam || hasProof) && !hasShared && (
+                <div className="flex gap-2 mb-2">
+                  <button
+                    onClick={() => handleShareToSocial("snap")}
+                    className="flex-1 py-3.5 rounded-2xl text-sm font-extrabold active:scale-[0.93] transition-all flex items-center justify-center gap-2"
+                    style={{ background: "linear-gradient(135deg,#fffc00,#ffd000)", color: "#000" }}
+                  >
+                    👻 Snap
+                  </button>
+                  <button
+                    onClick={() => handleShareToSocial("insta")}
+                    className="flex-1 py-3.5 rounded-2xl text-sm font-extrabold active:scale-[0.93] transition-all flex items-center justify-center gap-2"
+                    style={{ background: "linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)", color: "#fff" }}
+                  >
+                    📸 Insta
+                  </button>
+                </div>
+              )}
+
+              {hasShared && (
+                <div className="text-xs text-[#00e676] font-bold mb-2 text-center">Delt! Marker som fullført 👇</div>
+              )}
+
+              {/* Complete button */}
+              <button
+                onClick={handleComplete}
+                disabled={!hasShared}
+                className="w-full py-3.5 rounded-2xl text-sm font-extrabold active:scale-[0.97] transition-all flex items-center justify-center gap-2 disabled:opacity-35 disabled:pointer-events-none"
+                style={{
+                  background: "linear-gradient(135deg, #00e676, #22a03a)",
+                  color: "#fff",
+                }}
+              >
+                ✓ Fullført! (+10 pts)
+              </button>
             </div>
-          ) : (
-            <button
-              onClick={handleComplete}
-              className="w-full py-4 rounded-2xl text-white font-extrabold text-base active:scale-[0.97] transition-all"
-              style={{
-                background: "linear-gradient(135deg, #00e676, #22a03a)",
-                boxShadow: "0 8px 24px rgba(0,230,118,0.3)",
-              }}
+          )}
+
+          {/* ── GROUP COMPLETION FLOW ── */}
+          {isGroup && (
+            <div
+              className="rounded-2xl p-[18px]"
+              style={{ background: "#111118", border: "1.5px solid rgba(255,255,255,0.063)" }}
             >
-              ✓ Marker som fullført!
-            </button>
+              {currentChallenge.cam && (
+                <div className="flex gap-2 mb-3">
+                  <button
+                    onClick={() => setShowProofCamera(true)}
+                    className="flex-1 py-3.5 rounded-2xl text-sm font-extrabold active:scale-[0.97] transition-all flex items-center justify-center gap-2"
+                    style={{
+                      background: hasProof ? "rgba(0,230,118,.1)" : "linear-gradient(135deg, #00f0ff, #0099cc)",
+                      color: hasProof ? "#00e676" : "#fff",
+                      border: hasProof ? "1.5px solid rgba(0,230,118,.3)" : "none",
+                    }}
+                  >
+                    {hasProof ? "✓ Bilde tatt" : "📸 Ta gruppebilde"}
+                  </button>
+                </div>
+              )}
+
+              <button
+                onClick={handleComplete}
+                className="w-full py-4 rounded-2xl text-white font-extrabold text-base active:scale-[0.97] transition-all"
+                style={{
+                  background: "linear-gradient(135deg, #00e676, #22a03a)",
+                  boxShadow: "0 8px 24px rgba(0,230,118,0.3)",
+                }}
+              >
+                ✓ Vi er ferdige! (+10 pts til alle)
+              </button>
+            </div>
           )}
 
           {/* Skip + back */}
@@ -771,6 +951,17 @@ export function HomeClient({ userId }: HomeClientProps) {
             ← Endre valg
           </button>
         </div>
+      )}
+
+      {/* ── PUNISHMENT (group only) ── */}
+      {screen === "punishment" && currentChallenge?.punishment && (
+        <PunishmentScreen
+          punishment={currentChallenge.punishment}
+          participants={wizard.selectedFriends}
+          hostName={profile.name}
+          onConfirm={handlePunishmentConfirm}
+          onSkip={handlePunishmentSkip}
+        />
       )}
 
       {/* ── DONE / RESULT ── */}

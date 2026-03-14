@@ -26,11 +26,18 @@ export interface HistoryEntry {
   pts: number;
 }
 
+export interface SelectedFriend {
+  id: string;
+  username: string;
+  emoji: string;
+}
+
 export interface WizardState {
   mood: string | null;
   time: string | null;
   players: number | string | null;
   step: number;
+  selectedFriends: SelectedFriend[];
 }
 
 interface AppState {
@@ -38,6 +45,7 @@ interface AppState {
   wizard: WizardState;
   currentChallenge: SelectedChallenge | null;
   proofPhotoUrl: string | null;
+  hasShared: boolean;
   onboardingComplete: boolean;
 
   setProfile: (updates: Partial<UserProfile>) => void;
@@ -45,9 +53,11 @@ interface AppState {
   setWizardTime: (time: string) => void;
   setWizardPlayers: (players: number | string) => void;
   setWizardStep: (step: number) => void;
+  setSelectedFriends: (friends: SelectedFriend[]) => void;
   resetWizard: () => void;
   setCurrentChallenge: (challenge: SelectedChallenge | null) => void;
   setProofPhotoUrl: (url: string | null) => void;
+  setHasShared: (shared: boolean) => void;
   completeChallenge: (pts: number, challengeText: string, emoji: string) => void;
   completeOnboarding: () => void;
   resetProfile: () => void;
@@ -73,6 +83,7 @@ const defaultWizard: WizardState = {
   time: null,
   players: null,
   step: 0,
+  selectedFriends: [],
 };
 
 export const useAppStore = create<AppState>()(
@@ -82,6 +93,7 @@ export const useAppStore = create<AppState>()(
       wizard: defaultWizard,
       currentChallenge: null,
       proofPhotoUrl: null,
+      hasShared: false,
       onboardingComplete: false,
 
       setProfile: (updates) =>
@@ -109,12 +121,19 @@ export const useAppStore = create<AppState>()(
           wizard: { ...state.wizard, step },
         })),
 
+      setSelectedFriends: (friends) =>
+        set((state) => ({
+          wizard: { ...state.wizard, selectedFriends: friends },
+        })),
+
       resetWizard: () =>
-        set({ wizard: defaultWizard, currentChallenge: null, proofPhotoUrl: null }),
+        set({ wizard: defaultWizard, currentChallenge: null, proofPhotoUrl: null, hasShared: false }),
 
       setCurrentChallenge: (challenge) => set({ currentChallenge: challenge }),
 
       setProofPhotoUrl: (url) => set({ proofPhotoUrl: url }),
+
+      setHasShared: (shared) => set({ hasShared: shared }),
 
       completeChallenge: (pts, challengeText, emoji) => {
         const state = get();
@@ -164,6 +183,7 @@ export const useAppStore = create<AppState>()(
           wizard: defaultWizard,
           currentChallenge: null,
           proofPhotoUrl: null,
+          hasShared: false,
           onboardingComplete: false,
         }),
     }),
