@@ -70,6 +70,7 @@ export function HomeClient({ userId }: HomeClientProps) {
   const [timerActive, setTimerActive] = useState(false);
   const [timerExpired, setTimerExpired] = useState(false);
   const [groupSessionId, setGroupSessionId] = useState<string | null>(null);
+  const [showFriendSelector, setShowFriendSelector] = useState(false);
 
   const currentStep = wizard.step;
   const isGroup = currentChallenge?.isGroup ?? false;
@@ -334,6 +335,7 @@ export function HomeClient({ userId }: HomeClientProps) {
   function backToSetup() {
     resetWizard();
     setScreen("setup");
+    setShowFriendSelector(false);
     setTimerActive(false);
     setTimerExpired(false);
   }
@@ -341,6 +343,7 @@ export function HomeClient({ userId }: HomeClientProps) {
   function nextChallenge() {
     resetWizard();
     setScreen("setup");
+    setShowFriendSelector(false);
     setTimerExpired(false);
   }
 
@@ -409,7 +412,7 @@ export function HomeClient({ userId }: HomeClientProps) {
           </div>
 
           {/* Step 0: Mood */}
-          {currentStep === 0 && (
+          {!showFriendSelector && currentStep === 0 && (
             <div style={{ animation: "slideUp 0.3s cubic-bezier(0.16,1,0.3,1)" }}>
               <div
                 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 34, letterSpacing: 0.5, lineHeight: 1.1 }}
@@ -439,7 +442,7 @@ export function HomeClient({ userId }: HomeClientProps) {
           )}
 
           {/* Step 1: Time */}
-          {currentStep === 1 && (
+          {!showFriendSelector && currentStep === 1 && (
             <div style={{ animation: "slideUp 0.3s cubic-bezier(0.16,1,0.3,1)" }}>
               <div
                 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 34, letterSpacing: 0.5, lineHeight: 1.1 }}
@@ -476,7 +479,7 @@ export function HomeClient({ userId }: HomeClientProps) {
           )}
 
           {/* Step 2: Players */}
-          {currentStep === 2 && (
+          {!showFriendSelector && currentStep === 2 && (
             <div style={{ animation: "slideUp 0.3s cubic-bezier(0.16,1,0.3,1)" }}>
               <div
                 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 34, letterSpacing: 0.5, lineHeight: 1.1 }}
@@ -500,12 +503,9 @@ export function HomeClient({ userId }: HomeClientProps) {
                     onClick={() => {
                       setWizardPlayers(opt.value);
                       if (opt.value === 1) {
-                        // Solo: go straight to challenge
-                        // Zustand set() is synchronous so getState() sees players immediately
                         startChallenge();
                       } else {
-                        // Group: show friend selector
-                        setWizardStep(3);
+                        setShowFriendSelector(true);
                       }
                     }}
                     animationDelay={`${i * 0.4}s`}
@@ -523,18 +523,24 @@ export function HomeClient({ userId }: HomeClientProps) {
           )}
 
           {/* Step 3: Friend selector (group only) */}
-          {currentStep === 3 && (
+          {showFriendSelector && (
             <FriendSelector
               userId={userId}
               selectedFriends={wizard.selectedFriends}
               onSelect={setSelectedFriends}
-              onConfirm={startChallenge}
-              onBack={() => setWizardStep(2)}
+              onConfirm={() => {
+                setShowFriendSelector(false);
+                startChallenge();
+              }}
+              onBack={() => {
+                setShowFriendSelector(false);
+                setWizardStep(2);
+              }}
             />
           )}
 
           {/* Join pill */}
-          {currentStep < 3 && (
+          {!showFriendSelector && currentStep < 3 && (
             <button
               onClick={() => router.push("/friends")}
               className="flex items-center justify-center gap-2 rounded-2xl py-3.5 px-3.5 font-bold text-sm text-[rgba(235,235,245,0.8)] transition-all active:scale-[0.97] w-full"
