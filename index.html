@@ -59,10 +59,21 @@ html,body{height:100%;background:#000;background:var(--bg);color:var(--text);fon
 
 /* AVATAR GRID - 4 cols, bigger */
 .ob-emoji-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;margin-bottom:24px}
-.ob-emoji-btn{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:16px 8px;font-size:30px;cursor:pointer;transition:border-color .2s,background .2s,box-shadow .2s;position:relative;overflow:visible;line-height:1;text-align:center}
-.ob-emoji-btn span{display:inline-block;transition:transform .15s}
-.ob-emoji-btn:active span{transform:scale(.8)}
-.ob-emoji-btn.on{border-color:var(--red);background:rgba(255,45,85,.18);box-shadow:0 0 20px rgba(255,45,85,.3)}
+.ob-emoji-btn{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:12px 6px;cursor:pointer;transition:border-color .2s,background .2s,box-shadow .2s;position:relative;overflow:hidden;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.ob-emoji-btn:active{transform:scale(.92)}
+.ob-emoji-btn .av-animal{font-size:28px;line-height:1;display:block;transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.ob-emoji-btn .av-label{font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.5px;line-height:1.2}
+.ob-emoji-btn .av-vibe{font-size:8px;color:var(--muted);opacity:.7}
+.ob-emoji-btn.on{border-width:2px}
+.ob-emoji-btn.on .av-animal{transform:scale(1.2)}
+/* Burst partikkel */
+.av-burst{position:fixed;pointer-events:none;z-index:9999;animation:avBurst var(--dur) cubic-bezier(.2,.8,.4,1) forwards}
+@keyframes avBurst{0%{transform:translate(0,0) scale(1) rotate(0deg);opacity:1}70%{opacity:1}100%{transform:translate(var(--tx),var(--ty)) scale(0.2) rotate(var(--rot));opacity:0}}
+/* Avatar drop */
+.av-drop{position:fixed;pointer-events:none;z-index:9998;top:-50px;animation:avDrop var(--dur) ease-out forwards}
+@keyframes avDrop{0%{transform:translateY(0) rotate(var(--rs)) scale(1);opacity:1}60%{opacity:1}100%{transform:translateY(55vh) rotate(var(--re)) scale(.3);opacity:0}}
+.av-drop-inner{animation:avWobble var(--dur) ease-in-out}
+@keyframes avWobble{0%,100%{transform:rotate(0)}30%{transform:rotate(-5deg)}60%{transform:rotate(4deg)}}
 @keyframes emojiBounce{
   0%  {transform:scale(1)    translateY(0)     rotate(0deg)}
   25% {transform:scale(1.9)  translateY(-32px)  rotate(-10deg)}
@@ -528,19 +539,7 @@ html,body{height:100%;background:#000;background:var(--bg);color:var(--text);fon
   <div class="ob-label">Ditt kallenavn</div>
   <input class="ob-input" id="ob-name" type="text" placeholder="Skriv navnet ditt..." maxlength="20" autocomplete="off" onkeydown="if(event.key==='Enter')obGoToAge()">
   <div class="ob-label">Velg din avatar</div>
-  <div class="ob-emoji-grid">
-    <button class="ob-emoji-btn on" onclick="pickEmoji(this,'🔥')"><span>🔥</span></button>
-    <button class="ob-emoji-btn" onclick="pickEmoji(this,'💀')"><span>💀</span></button>
-    <button class="ob-emoji-btn" onclick="pickEmoji(this,'👾')"><span>👾</span></button>
-    <button class="ob-emoji-btn" onclick="pickEmoji(this,'🤙')"><span>🤙</span></button>
-    <button class="ob-emoji-btn" onclick="pickEmoji(this,'😈')"><span>😈</span></button>
-    <button class="ob-emoji-btn" onclick="pickEmoji(this,'🥷')"><span>🥷</span></button>
-    <button class="ob-emoji-btn" onclick="pickEmoji(this,'🐉')"><span>🐉</span></button>
-    <button class="ob-emoji-btn" onclick="pickEmoji(this,'⚡')"><span>⚡</span></button>
-    <button class="ob-emoji-btn" onclick="pickEmoji(this,'🎭')"><span>🎭</span></button>
-    <button class="ob-emoji-btn" onclick="pickEmoji(this,'🌊')"><span>🌊</span></button>
-    <button class="ob-emoji-btn" onclick="pickEmoji(this,'🦋')"><span>🦋</span></button>
-    <button class="ob-emoji-btn" onclick="pickEmoji(this,'🌙')"><span>🌙</span></button>
+  <div class="ob-emoji-grid" id="av-grid">
   </div>
   <div class="ob-dots"><div class="ob-dot"></div><div class="ob-dot on"></div><div class="ob-dot"></div></div>
   <button class="btn btn-primary" onclick="obGoToAge()">Neste →</button>
@@ -1277,7 +1276,7 @@ const DB={
       {text:"Hvem holder rett ansikt lengst mens de andre lager grimaser? 😐",cat:"sosial",cam:true,p:"Taperen gjør sin beste kylling-dans foran alle 🐔"},
       {text:"Alle skriver en 4-linjes rap om personen til høyre og leser høyt 🎤",cat:"kreativ",p:"Dårligste rapper synger sin rap som voice memo til alle 🎵"},
       {text:"Hvem finner den rareste tingen i lommen sin? Alle viser frem! 👜",cat:"sosial",cam:true,p:"Den med kjedeligst gjenstand bærer den som halskjede i 30 min 😄"},
-      {text:"Alle tegner hverandre – 60 sekunder per portrett. Vis frem og stem! 🖼️",cat:"kreativ",cam:true,p:"Dårligste kunstner bruker bildet som profilbilde i 24 timer 😂"},
+      {text:"Alle tegner hverandre – 60 sekunder per portrett. Vis frem og stem! 🖼️",cat:"kreativ",cam:true,p:"Dårligste kunstner bruker bildet som profilbilde i 12 timer 😂"},
       {text:"Alle poserer som en kjent statue i 30 sekunder – hvem er best? 🗿",cat:"kreativ",cam:true,p:"Taperen er DJ resten av kvelden 🎵"},
       {text:"Synkroniser et hopp og ta bilde akkurat idet alle er i luften 🦘",cat:"fysisk",cam:true,p:"Den som ikke hopper høyt nok gjør 10 squats 🏋️"},
       {text:"Alle lager verdens beste grimase – stem på vinneren 😜",cat:"sosial",cam:true,p:"Den med kjedeligst grimase gjør en kylling-dans 🐔"},
@@ -1287,8 +1286,8 @@ const DB={
   },
   medium:{
     solo:[
-      {text:"Hold en helt seriøs 1-minutts tale om hvorfor du er Norges beste kokk 🗣️",cat:"kreativ",cam:true},
-      {text:"Send en overdramatisk poetisk unnskyldning til noen for noe helt uviktig 📜",cat:"sosial"},
+      {text:"Hold 1 min seriøs tale: du er Norges beste kokk 👨‍🍳 Ingen latter tillatt!",cat:"kreativ",cam:true},
+      {text:"Send en overdramatisk unnskyldning til noen for noe HELT uviktig 😭",cat:"sosial"},
       {text:"Gå ut og finn noe blått innen 5 minutter – ta et kunstnerisk bilde 🔵",cat:"fysisk",cam:true},
       {text:"Bytt profilbilde til det mest dramatiske selfiet du kan ta – hold det 24 timer 📷",cat:"sosial",cam:true},
       {text:"Skriv og send en 10-setnings novelle om naboen din på 5 minutter 📖",cat:"kreativ"},
@@ -1318,7 +1317,7 @@ const DB={
       {text:"Send til den 7. i kontaktlisten: 'Du vet hva du har gjort.' Vent på svar 😂",cat:"sosial",p:"Den som ler først sender samme melding til to nye kontakter 💀"},
       {text:"Alle bytter telefon i 3 minutter og sender én melding til tilfeldig kontakt 📱",cat:"kaos",p:"Den som sender noe kjedelig velger neste utfordring 🎯"},
       {text:"Gjengen lager salg-pitch for et hverdagsobjekt på 5 min – stem! 💼",cat:"kreativ",cam:true,p:"Dårligste selger bruker objektet som hatt hele kvelden 🎩"},
-      {text:"Alle finner et objekt ute og lager en felles skulptur av det 🌿",cat:"kreativ",cam:true,p:"Den som bidrar minst vasker opp etter kvelden 🧹"},
+      {text:"Alle finner et objekt ute og lager en felles skulptur av det 🌿",cat:"kreativ",cam:true,p:"Den som bidrar minst gjør kylling-dansen sin på kamera 🐔"},
       {text:"Alle springer til et mål 50 meter unna – siste er taper 🏃",cat:"fysisk",p:"Taperen gjør 20 jumping jacks foran alle 😅"},
       {text:"Lag en menneskepyramide og ta bilde – holder dere i 5 sekunder? 🏋️",cat:"fysisk",cam:true,p:"Pyramiden må holdes dobbelt så lenge neste forsøk 💪"},
       {text:"Alle finner en pinne ute og lager et kunstverk i bakken 🌾",cat:"kreativ",cam:true,p:"Det morsomste kunstverket velger neste utfordring 🎨"},
@@ -1331,17 +1330,17 @@ const DB={
   },
   wild:{
     solo:[
-      {text:"Gå inn i en tilfeldig butikk og spør seriøst om de har energikrystaller til hunden din 🔮",cat:"sosial",cam:true},
-      {text:"Bestill på en kafé med en falsk aksent du holder hele bestillingen 🎭",cat:"sosial",cam:true},
-      {text:"Gå bort til en fremmed og si at du er stor fan av arbeidet deres 🌟",cat:"sosial",cam:true},
+      {text:"Gå i en butikk og spør helt seriøst etter energikrystaller til hunden din 🔮",cat:"sosial",cam:true},
+      {text:"Bestill på kafé med falsk aksent — hold den HELE veien 🎭",cat:"sosial",cam:true},
+      {text:"Gå bort til en fremmed og si at du er STOR fan av arbeidet deres 🌟",cat:"sosial",cam:true},
       {text:"Ring noen og si kun 'Du vet hva du har gjort' og legg på 📞",cat:"kaos"},
       {text:"Ta en spontan selfie med den første fremmede som sier ja på gaten 🤳",cat:"sosial",cam:true},
       {text:"Gå inn i en butikk og spør om de har 'retroaktiv pizza'. Film reaksjonen 🎥",cat:"kaos",cam:true},
-      {text:"Snakk kun i spørsmål til neste person du møter i 5 minutter 🤔",cat:"sosial"},
-      {text:"Gå bort til en fremmed og si at du har mistet hunden din – beskriv en imaginær hund 🐕",cat:"kaos"},
+      {text:"Snakk KUN i spørsmål til neste person i 5 min 🤔 Ingen påstander!",cat:"sosial"},
+      {text:"Si til en fremmed at du har mistet hunden din — beskriv en helt oppdiktet hund 🐕",cat:"kaos"},
       {text:"Sit down on a random bench and pretend to wait for someone very important 🕴️",cat:"sosial"},
       {text:"Gå inn i en butikk og spør om de tar betalt i vitser 🤗",cat:"kaos"},
-      {text:"Presenter deg selv med et falskt navn og yrke til neste fremmed du møter 🕵️",cat:"sosial"},
+      {text:"Gi deg selv et falskt navn + yrke og presenter deg for neste fremmed 🕵️",cat:"sosial"},
       {text:"Ring en pizza-restaurant og spør om de leverer til månen 🌕",cat:"kaos"},
     ],
     group:[
@@ -1352,7 +1351,7 @@ const DB={
       {text:"Alle bytter personlighet med personen til høyre i 15 minutter. Inn i karakter NÅ! 🎭",cat:"kaos",cam:true,p:"Den som bryter ut av karakteren raskest velger neste utfordring 🎯"},
       {text:"Gjengen deler seg i to og improviserer en telenovela-scene på 3 minutter 🎬",cat:"kaos",cam:true,p:"Dårligste skuespiller synger avslutningssangen alene 🎵"},
       {text:"En er guide, resten er turister – gå gjennom nabolaget og presenter alt overdramatisk 🗺️",cat:"kaos",cam:true,p:"Dårligste turist bærer en imaginær koffert resten av turen 🧳"},
-      {text:"Alle bytter sko med hverandre og går til nærmeste lykt og tilbake 👟",cat:"kaos",cam:true,p:"Den som nekter går barfot i stedet 😂"},
+      {text:"Alle bytter sko med hverandre og går til nærmeste lykt og tilbake 👟",cat:"kaos",cam:true,p:"Den som nekter må gjøre 10 hønemiminger på kamera 🐔"},
       {text:"Gjengen bestemmer et hemmelig ord – den som sier det mister et poeng i 20 min 🤫",cat:"kaos",p:"Den med flest poeng bestemmer neste destinasjon 📍"},
       {text:"Flash mob! Alle fryser på signal i et offentlig rom i 30 sekunder 🧊",cat:"kaos",cam:true,p:"Den som beveger seg velger neste utfordring 🎯"},
       {text:"Gjengen lager en spontan fotoutstilling – finn fem kunstverk ute og presenter dem 🖼️",cat:"kreativ",cam:true,p:"Dårligste kurator forklarer alle verkene med kun lyder 😂"},
@@ -1385,9 +1384,9 @@ const DB={
     safe_solo:[
       {text:"Sett kamera på deg selv og dans til tilfeldig sang på shuffle. Full innsats fra første sekund – ikke stopp! 🎵",cat:"video",cam:true},
       {text:"Film deg selv mens du lip syncer til favorittlåten din med FULL kropp – ansikt, armer, alt! 🎤",cat:"video",cam:true},
-      {text:"Lag en 30-sekunders 'dag i livet'-video av de neste 30 sekundene. Kommenter ALT som om det er ekstremt spennende 🎬",cat:"video",cam:true},
-      {text:"Film deg selv mens du forklarer favorittfilmen din på 20 sekunder – med overdramatisk ansikt hele veien 🎭",cat:"video",cam:true},
-      {text:"Bytt aksent hvert 10. sekund mens du forteller hva du gjorde i dag. Norsk, britisk, amerikansk. Kamera på! 🌍",cat:"video",cam:true},
+      {text:"Film 30-sek dag-i-livet av deg selv — kommenter ALT som om det er EPISK 🎬",cat:"video",cam:true},
+      {text:"Forklar favorittfilmen din på 20 sek — overdramatisk ansikt hele veien 🎭",cat:"video",cam:true},
+      {text:"Bytt aksent hvert 10. sek mens du forteller om dagen — norsk, britisk, amerikansk 🌍",cat:"video",cam:true},
       {text:"Imiter lyden av 5 forskjellige dyr på rad mens du holder helt rett ansikt. Ingen smiling tillatt 🐄",cat:"video",cam:true},
       {text:"Film en 'outfit of the day' med den rareste kombinasjonen av klær du finner. Full selvtillit! 👗",cat:"video",cam:true},
       {text:"Lag en 20-sekunders matanmeldelse av det siste du spiste – med Gordon Ramsay-energi 👨‍🍳",cat:"video",cam:true},
@@ -1408,9 +1407,9 @@ const DB={
       {text:"Sett på shuffle, trykk play – dans som om du VISSTE hvilken sang som kom. Full innsats fra første sekund, ikke stopp uansett! 🎵",cat:"video",cam:true},
       {text:"Film ansiktet ditt mens du åpner den seneste meldingen fra mamma og les den høyt med dramatisk stemme 📱",cat:"video",cam:true},
       {text:"Hold kamera på ansiktet – velg en tilfeldig følelse og lag en 15-sekunders monolog om ingenting med den følelsen på MAKS 🎭",cat:"video",cam:true},
-      {text:"Still inn kamera, les opp den mest absurde nyheten du finner – med helt alvorlig nyhetsoppleserstemme. Ingen smiling 📰",cat:"video",cam:true},
-      {text:"Film deg selv mens du prøver å si 'Norsk er et morsomt språk' på 5 forskjellige aksenter uten å le 🌍",cat:"video",cam:true},
-      {text:"Sett telefonen mot veggen og film deg selv mens du prøver å lære deg en TikTok-dans på 3 minutter. Post prosessen 💃",cat:"video",cam:true},
+      {text:"Les den mest absurde nyheten du finner — alvorlig nyhetsoppleserstemme, ingen smiling 📰",cat:"video",cam:true},
+      {text:"Si Norsk er et morsomt språk på 5 forskjellige aksenter — ingen smiling 🌍",cat:"video",cam:true},
+      {text:"Lær en TikTok-dans på 3 min og film hele prosessen — post det uferdig! 💃",cat:"video",cam:true},
       {text:"Film en 'dag i livet'-video av de neste 60 sekundene – kommenter ALT du gjør som om det er ekstremt spennende 🎬",cat:"video",cam:true},
       {text:"Lag en 30-sekunders matanmeldelse av det siste du spiste – med Gordon Ramsay-energi 👨‍🍳",cat:"video",cam:true},
       {text:"Film ansiktet ditt mens du leser de siste 5 søkene i nettleseren din høyt. Ingen sletting tillatt 👀",cat:"video",cam:true},
@@ -1428,13 +1427,13 @@ const DB={
     ],
     group:[
       {text:"To personer stirrer på hverandre rett i kamera. Den som smiler, blunker eller beveger seg TAPER. Film ansiktene tett 😐",cat:"video",cam:true,p:"Taperen gjør kylling-dans på kamera og poster det 🐔"},
-      {text:"En person roper et tilfeldig yrke – du har 3 sekunder på å gå INN i karakteren og holde den i 30 sekunder. Ingen forberedelse 🎭",cat:"video",cam:true,p:"Den som bryter karakteren gjør det om igjen som et dyr 🐾"},
-      {text:"Person A gjør tilfeldige bevegelser – Person B er speilet og MÅ kopiere umiddelbart. Film begge tett. Bytt etter 30 sek 🔄",cat:"video",cam:true,p:"Den som henger etter bytter og må kopiere dobbelt så fort 😂"},
+      {text:"Noen roper et tilfeldig yrke — du har 3 sek på å gå INN i karakteren i 30 sek 🎭",cat:"video",cam:true,p:"Den som bryter karakteren gjør det om igjen som et dyr 🐾"},
+      {text:"Speillek! A gjør bevegelser — B MÅ kopiere umiddelbart. Film begge. Bytt etter 30 sek 🔄",cat:"video",cam:true,p:"Den som henger etter bytter og må kopiere dobbelt så fort 😂"},
       {text:"Alle fryser på signal midt i det dere gjør – hold posisjonen i 20 sekunder mens kamera går sakte rundt og filmer alle ❄️",cat:"video",cam:true,p:"Den som beveger seg velger neste utfordring og MÅ filme den"},
       {text:"Film ansiktet til en venn mens du viser dem et bilde de ikke har sett. Ikke vis bildet – bare reaksjonen. La seerne gjette 👀",cat:"video",cam:true,p:"Den med kjedeligst reaksjon må se et enda verre bilde 😬"},
-      {text:"En er reporter, en er kjendis. Reporter stiller de villeste spørsmål mulig – kjendis må svare seriøst 🎤",cat:"video",cam:true,p:"Dårligste intervju-objekt blir reporter i neste runde"},
+      {text:"En er reporter, en er kjendis. Reporter stiller de villeste spørsmål mulig – kjendis må svare seriøst 🎤",cat:"video",cam:true,p:"Dårligste intervju-objekt svarer alle spørsmål på operastemme 🎤"},
       {text:"Alle velger en lydeffekt på telefonen – spill dem i tur og orden mens dere holder rett ansikt. First to laugh loses 🔊",cat:"video",cam:true,p:"Den som ler først må lage sin egen lydeffekt live 😂"},
-      {text:"En person er regissør og gir instruksjoner hvert 5. sekund – resten må følge dem LIVE på kamera 🎬",cat:"video",cam:true,p:"Dårligste skuespiller blir regissør neste gang"},
+      {text:"Én er regissør 🎬 Instrukser gjengen hvert 5. sek – de MÅ følge! Film det!",cat:"video",cam:true,p:"Dårligste skuespiller blir regissør neste gang"},
       {text:"Lag verdens raskeste makeover – 60 sekunder, det dere finner i nærheten. Film prosessen og resultatet 💄",cat:"video",cam:true,p:"Dårligste makeover beholder looken i 30 minutter 😂"},
 
       // ── VANN I MUNNEN ──
@@ -1550,16 +1549,100 @@ function obNext(step){
   document.querySelectorAll('.ob-screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('ob'+step).classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
+  if(step===1)buildAvatarGrid();
 }
 
-function pickEmoji(btn,em){
-  document.querySelectorAll('.ob-emoji-btn').forEach(b=>b.classList.remove('on','pop'));
+const ANIMALS=[
+  {e:'🦁',n:'Løvekongen',v:'Aldri redd',c:'#ff6b00'},
+  {e:'🐺',n:'Ulven',v:'Ensom topp',c:'#7b2fff'},
+  {e:'🦊',n:'Reven',v:'For smart',c:'#ff4500'},
+  {e:'🐉',n:'Dragen',v:'Ren kaos',c:'#ff2d55'},
+  {e:'🦅',n:'Ørnen',v:'Ser alt',c:'#0099cc'},
+  {e:'🐯',n:'Tigeren',v:'Raskest',c:'#ff8c00'},
+  {e:'🦋',n:'Sommerfuglen',v:'Uforutsigbar',c:'#bf5af2'},
+  {e:'🐊',n:'Krokodillen',v:'Alltid klar',c:'#00a86b'},
+  {e:'🦈',n:'Haien',v:'Stopper aldri',c:'#005f8a'},
+  {e:'🐻',n:'Bjørnen',v:'Rolig boss',c:'#8b4513'},
+  {e:'🦉',n:'Uglen',v:'For kul',c:'#5e4cbf'},
+  {e:'🐸',n:'Frosken',v:'Overraskende',c:'#2ea84a'},
+  {e:'🦝',n:'Vaskebjørnen',v:'Litt kriminell',c:'#888'},
+  {e:'🐙',n:'Blekkspruten',v:'Overalt',c:'#cc3399'},
+  {e:'🦜',n:'Papegøyen',v:'Sier alt',c:'#e63000'},
+  {e:'🦄',n:'Enhørningen',v:'Unik alltid',c:'#ff69b4'},
+];
+
+function buildAvatarGrid(){
+  const grid=document.getElementById('av-grid');
+  if(!grid||grid.children.length>0)return;
+  ANIMALS.forEach((a,i)=>{
+    const btn=document.createElement('button');
+    btn.className='ob-emoji-btn'+(i===0?' on':'');
+    if(i===0){btn.style.borderColor=a.c;btn.style.background=a.c+'22';}
+    btn.innerHTML='<span class="av-animal">'+a.e+'</span><div class="av-label">'+a.n+'</div><div class="av-vibe">'+a.v+'</div>';
+    btn.onclick=()=>pickEmoji(btn,a.e,a.c);
+    grid.appendChild(btn);
+  });
+}
+
+function pickEmoji(btn,em,color){
+  const col=color||'#ff2d55';
+  document.querySelectorAll('.ob-emoji-btn').forEach(b=>{
+    b.classList.remove('on');
+    b.style.borderColor='';
+    b.style.background='';
+    b.style.boxShadow='';
+  });
   btn.classList.add('on');
+  btn.style.borderColor=col;
+  btn.style.background=col+'22';
+  btn.style.boxShadow='0 0 16px '+col+'44';
   selectedEmoji=em;
-  void btn.offsetWidth;
-  btn.classList.add('pop');
-  setTimeout(()=>btn.classList.remove('pop'),650);
   playSound('pop');
+  // Burst
+  const rect=btn.getBoundingClientRect();
+  const cx=rect.left+rect.width/2;
+  const cy=rect.top+rect.height/2;
+  for(let i=0;i<10;i++){
+    const p=document.createElement('div');
+    p.className='av-burst';
+    const angle=(i/10)*Math.PI*2+(Math.random()-.5)*.4;
+    const dist=100+Math.random()*120;
+    const dur=(0.5+Math.random()*.4)+'s';
+    p.style.setProperty('--tx',Math.cos(angle)*dist+'px');
+    p.style.setProperty('--ty',Math.sin(angle)*dist+'px');
+    p.style.setProperty('--dur',dur);
+    p.style.setProperty('--rot',(Math.random()-.5)*360+'deg');
+    p.style.left=cx+'px';p.style.top=cy+'px';
+    p.style.fontSize=(12+Math.random()*14)+'px';
+    p.textContent=em;
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),1000);
+  }
+}
+
+function avatarDrop(){
+  const emojis=ANIMALS.map(a=>a.e);
+  const myEm=selectedEmoji||'🦁';
+  const pool=[myEm,myEm,myEm,...emojis];
+  for(let i=0;i<25;i++){
+    setTimeout(()=>{
+      const p=document.createElement('div');
+      p.className='av-drop';
+      const dur=(0.7+Math.random()*.5)+'s';
+      p.style.setProperty('--dur',dur);
+      p.style.setProperty('--rs',(Math.random()-.5)*20+'deg');
+      p.style.setProperty('--re',(Math.random()-.5)*180+'deg');
+      p.style.left=(10+Math.random()*80)+'vw';
+      const inner=document.createElement('div');
+      inner.className='av-drop-inner';
+      inner.style.setProperty('--dur',dur);
+      inner.style.fontSize=(16+Math.random()*14)+'px';
+      inner.textContent=pool[Math.floor(Math.random()*pool.length)];
+      p.appendChild(inner);
+      document.body.appendChild(p);
+      setTimeout(()=>p.remove(),1400);
+    },i*40);
+  }
 }
 
 function pickAge(btn,age){
@@ -1651,7 +1734,7 @@ function completeDaily(){
   addToHistory(getDailyChallenge().text,'easy');
   LB[0].pts=PL.pts;LB[0].streak=PL.streak;
   updateHeader();saveData();renderDaily();
-  confetti();vibrate();playSound('complete');
+  avatarDrop();vibrate();playSound('complete');
   toast('📅 +10 poeng! Streak: '+PL.streak+' 🔥');
   checkBadges();
 }
@@ -1885,7 +1968,7 @@ async function joinCode(){
     if(!S.time)S.time='30 min';
     if(!S.players)S.players=2;
     S.code=v;
-    confetti();vibrate();playSound('complete');
+    avatarDrop();vibrate();playSound('complete');
     const c={text:row.challenge_text,level:'medium',cat:'sosial',p:null};
     // Show who created it
     toast('🔥 Utfordring fra '+row.created_emoji+' '+row.created_by+'!');
@@ -2056,7 +2139,7 @@ function completeChallenge(){
   addToHistory(S.challenge,S.punishment?'wild':'medium');
   LB[0].pts=PL.pts;LB[0].streak=PL.streak;
   updateHeader();saveData();
-  confetti();vibrate();playSound('complete');
+  avatarDrop();vibrate();playSound('complete');
   checkBadges();
 
   // Save to Supabase
@@ -2475,7 +2558,7 @@ function showBadgeUnlock(b){
   document.getElementById('bu-name').textContent=b.nm;
   document.getElementById('bu-desc').textContent=b.ds;
   document.getElementById('badge-unlock').classList.add('on');
-  confetti();vibrate();playSound('complete');
+  avatarDrop();vibrate();playSound('complete');
 }
 function closeBadgeUnlock(){document.getElementById('badge-unlock').classList.remove('on');}
 
