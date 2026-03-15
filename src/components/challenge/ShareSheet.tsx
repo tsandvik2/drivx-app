@@ -39,7 +39,7 @@ export function ShareSheet({ challengeText, username, photoUrl, pts, onNext }: S
   }
 
   async function quickShare(platform: "snap" | "insta" | "tiktok" | "sms", mode: "complete" | "invite" = "complete") {
-    const appUrl = typeof window !== "undefined" ? window.location.origin : "https://naa-app2.vercel.app";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
     const text = mode === "invite"
       ? `Jeg utfordrer deg: "${challengeText}" 🔥 Klarer du det? Last ned NÅ-appen: ${appUrl}`
       : `Jeg fullførte NÅ-utfordringen: "${challengeText}" 🔥 Last ned NÅ-appen: ${appUrl}`;
@@ -76,7 +76,7 @@ export function ShareSheet({ challengeText, username, photoUrl, pts, onNext }: S
   }
 
   async function handleNativeShare() {
-    const appUrl = typeof window !== "undefined" ? window.location.origin : "https://naa-app2.vercel.app";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
     if (navigator.share) {
       try {
         await navigator.share({

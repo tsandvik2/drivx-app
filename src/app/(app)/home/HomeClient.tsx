@@ -160,7 +160,7 @@ export function HomeClient({ userId }: HomeClientProps) {
   }
 
   async function handleShareToSocial(platform: "snap" | "insta" | "native") {
-    const appUrl = typeof window !== "undefined" ? window.location.origin : "https://naa-app2.vercel.app";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
     const text = `Jeg holder på med NÅ-utfordringen: "${currentChallenge?.text}" 🔥 Klarer du det? ${appUrl}`;
 
     // Try native share with image first (works great on mobile)
