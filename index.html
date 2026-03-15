@@ -846,7 +846,7 @@ html,body{height:100%;background:#000;background:var(--bg);color:var(--text);fon
     <div class="badges-title">🏅 BADGES</div>
     <div class="badges-g" id="badges-g"></div>
     <button class="btn btn-ghost" onclick="resetOnboarding()">✏️ Endre profil</button>
-    <button class="btn btn-ghost" style="color:var(--red);border-color:rgba(255,45,85,.2);margin-top:4px;" onclick="if(confirm('Nullstill alt og se startsiden?')){localStorage.clear();location.reload();}">🔄 Se startside igjen</button>
+    <button class="btn btn-ghost" style="color:var(--red);border-color:rgba(255,45,85,.2);margin-top:4px;" onclick="if(confirm('Nullstill alt og se startsiden?')){localStorage.clear();window.location.href=window.location.pathname+'?reset=1';}">🔄 Nullstill og se startside</button>
   </div>
 
   <!-- DAGENS -->
@@ -3297,6 +3297,12 @@ function addDemoFriendsIfEmpty(){
   // Demo-venner fjernet — kun ekte venner vises
 }
 
+
+// ?reset=1 i URL sletter alt og viser startside
+if(new URLSearchParams(window.location.search).get('reset')==='1'){
+  localStorage.clear();
+  window.history.replaceState({},'',window.location.pathname);
+}
 
 loadData();
 if(PL.name&&PL.name!==''){
