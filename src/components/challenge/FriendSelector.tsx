@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { LoadingDots } from "@/components/shared/LoadingDots";
@@ -62,9 +63,9 @@ export function FriendSelector({ userId, selectedFriends, onSelect, onConfirm, o
     }
   }
 
-  return (
+  const content = (
     <div
-      className="fixed inset-0 z-50 flex flex-col overflow-y-auto px-4 pt-6 pb-10"
+      className="fixed inset-0 z-[9999] flex flex-col overflow-y-auto px-4 pt-6 pb-10"
       style={{ background: "#080810", animation: "slideUp 0.3s cubic-bezier(0.16,1,0.3,1)" }}
     >
       {loading ? (
@@ -188,4 +189,6 @@ export function FriendSelector({ userId, selectedFriends, onSelect, onConfirm, o
       )}
     </div>
   );
+
+  return createPortal(content, document.body);
 }
