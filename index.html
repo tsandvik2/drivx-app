@@ -1052,7 +1052,6 @@ html,body{height:100%;background:#000;background:var(--bg);color:var(--text);fon
   <div class="cam-preview-actions">
     <div class="cam-preview-title">Bra! Del det nå 🔥</div>
     <div id="share-photo-hint" style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:8px;">Trykk en knapp for å dele direkte 📲</div>
-    <script>if(/iPhone|iPad/.test(navigator.userAgent))document.getElementById('share-photo-hint').textContent='Trykk en knapp → iOS deleark åpnes 📲';</script>
     <button class="btn btn-snap" onclick="sharePhoto('snap')">👻 Del på Snapchat</button>
     <button class="btn btn-insta" onclick="sharePhoto('insta')">📸 Del på Instagram</button>
     <button class="btn btn-tiktok" onclick="sharePhoto('tiktok')">🎵 Del på TikTok</button>
@@ -1093,7 +1092,7 @@ html,body{height:100%;background:#000;background:var(--bg);color:var(--text);fon
 // ══════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════
-const S={mood:null,time:null,players:null,challenge:null,punishment:null,code:null,wizStep:0,needsCamera:false,groupMembers:[],pendingSharePlatform:null,sharedThisChallenge:false};
+const S={mood:null,time:null,players:null,challenge:null,punishment:null,code:null,wizStep:0,needsCamera:false,groupMembers:[],pendingSharePlatform:null,sharedThisChallenge:false,dailyMode:false,pendingChallenge:null,proofMode:false,shareAfterCamera:false};
 let PL={name:'',emoji:'🔥',age:'16-19',pts:0,streak:0,best:0,done:0,history:[],earnedBadges:[],dailyDone:false,dailyDate:'',dailyPtsDate:'',dailyPtsCount:0,dailyShareDate:'',dailyShareCount:0,sharedChallenges:[]};
 let selectedEmoji='🔥';
 let selectedAge='16-19';
@@ -2807,9 +2806,7 @@ async function shareVideo(platform){
     const file=new File([videoBlob],'nå-utfordring.'+ext,{type:videoBlob.type});
     if(navigator.canShare({files:[file]})){
       try{
-        await navigator.share({files:[file],title:'NÅ-utfordring',text:'🔥 '+(S.challenge||'')+'
-
-#NåUtfordringen'});
+        await navigator.share({files:[file],title:'NÅ-utfordring',text:'🔥 '+(S.challenge||'')+' #NåUtfordringen'});
         toast('Delt! 🔥');return;
       }catch(e){if(e.name==='AbortError')return;}
     }
@@ -2840,9 +2837,7 @@ function sharePhoto(platform){
             await navigator.share({
               files:[file],
               title:'NÅ-utfordring',
-              text:'🔥 '+S.challenge+'
-
-#NåUtfordringen'
+              text:'🔥 '+S.challenge+' #NåUtfordringen'
             });
             toast('Delt! 🔥');
             return;
