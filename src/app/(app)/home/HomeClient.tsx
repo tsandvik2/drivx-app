@@ -197,9 +197,24 @@ export function HomeClient({ userId }: HomeClientProps) {
     setHasShared(true);
 
     if (platform === "snap") {
-      window.open("snapchat://", "_blank");
+      // Try app deep link first, fall back to web
+      const snapLink = document.createElement("a");
+      snapLink.href = "snapchat://";
+      snapLink.click();
+      setTimeout(() => {
+        if (!document.hidden) {
+          window.open("https://www.snapchat.com/", "_blank");
+        }
+      }, 1200);
     } else if (platform === "insta") {
-      window.open("instagram://camera", "_blank");
+      const instaLink = document.createElement("a");
+      instaLink.href = "instagram://camera";
+      instaLink.click();
+      setTimeout(() => {
+        if (!document.hidden) {
+          window.open("https://www.instagram.com/", "_blank");
+        }
+      }, 1200);
     }
 
     toast.success("Tekst kopiert! Del det i appen 📲");
@@ -278,19 +293,35 @@ export function HomeClient({ userId }: HomeClientProps) {
       }
     }
 
-    // Solo: save completion to Supabase
-    if (isSolo && userId) {
+    // Save completion and sync profile to Supabase
+    if (userId) {
       try {
         const supabase = createClient();
-        await supabase.from("completions").insert({
-          user_id: userId,
-          challenge_text: currentChallenge.text,
-          photo_url: uploadedUrl,
-          pts_earned: 10,
-        });
+        const state = useAppStore.getState();
+        const today = new Date().toDateString();
+        const yesterday = new Date(Date.now() - 86400000).toDateString();
+        const lastDate = state.profile.dailyDate;
+        const newStreak =
+          lastDate === yesterday
+            ? state.profile.streak + 1
+            : lastDate === today
+              ? state.profile.streak
+              : 1;
+        const newPts = state.profile.pts + 10;
+        const newDone = state.profile.done + 1;
+
+        if (isSolo) {
+          await supabase.from("completions").insert({
+            user_id: userId,
+            challenge_text: currentChallenge.text,
+            photo_url: uploadedUrl,
+            pts_earned: 10,
+          });
+        }
+
         await supabase
           .from("profiles")
-          .update({ pts: profile.pts + 10, done_count: profile.done + 1 })
+          .update({ pts: newPts, done_count: newDone, streak: newStreak })
           .eq("id", userId);
       } catch (err) {
         console.error("Save completion error:", err);

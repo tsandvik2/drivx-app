@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useAppStore } from "@/store/app-store";
-import { DAILY_CHALLENGE } from "@/lib/challenges/data";
+import { getDailyChallenge } from "@/lib/challenges/data";
 import { toast } from "sonner";
 
 export default function TodayPage() {
@@ -10,10 +10,13 @@ export default function TodayPage() {
   const { profile, setProfile } = useAppStore();
 
   const today = new Date().toDateString();
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
   const isDone = profile.dailyDone && profile.dailyDate === today;
+  const streakInDanger = profile.streak > 0 && profile.dailyDate === yesterday && !isDone;
+
+  const dailyChallenge = getDailyChallenge();
 
   function markDailyDone() {
-    const today = new Date().toDateString();
     setProfile({ dailyDone: true, dailyDate: today, pts: profile.pts + 5 });
     toast.success("Dagens utfordring fullført! +5 pts 🎉");
   }
@@ -32,6 +35,27 @@ export default function TodayPage() {
         </div>
         <div className="text-sm text-[#55556a] font-medium">Én utfordring per dag</div>
       </div>
+
+      {/* Streak danger banner */}
+      {streakInDanger && (
+        <div
+          className="rounded-2xl p-3.5 flex gap-3 items-center mb-3.5 relative overflow-hidden"
+          style={{
+            background: "rgba(255,214,10,0.06)",
+            border: "1.5px solid rgba(255,214,10,0.35)",
+          }}
+        >
+          <span className="text-[26px] flex-shrink-0" style={{ animation: "pulse 1.5s ease-in-out infinite" }}>⚠️</span>
+          <div>
+            <div className="text-sm font-extrabold text-[#ffd60a] mb-0.5">
+              Streaken din er i fare!
+            </div>
+            <div className="text-xs text-[#55556a] leading-relaxed">
+              Du er på {profile.streak} dager. Fullfør en utfordring nå for å beholde streaken! 🔥
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Daily challenge */}
       <div
@@ -54,7 +78,7 @@ export default function TodayPage() {
           </div>
         </div>
         <div className="text-sm font-bold leading-relaxed mb-3 pl-2">
-          {DAILY_CHALLENGE.text}
+          {dailyChallenge.text}
         </div>
         {isDone ? (
           <div className="flex items-center gap-1.5 text-sm font-bold text-[#00e676] pl-2">
@@ -118,13 +142,25 @@ export default function TodayPage() {
         </div>
       )}
 
+      {/* Start challenge CTA */}
+      <button
+        onClick={() => router.push("/home")}
+        className="w-full py-4 rounded-2xl font-extrabold text-white text-base active:scale-[0.97] transition-all mb-3.5"
+        style={{
+          background: "linear-gradient(135deg, #ff2d55, #ff6b00)",
+          boxShadow: "0 8px 32px rgba(255,45,85,0.35)",
+        }}
+      >
+        🎯 Start ny utfordring
+      </button>
+
       {/* Weekly summary */}
       <div
         className="rounded-[18px] px-[18px] py-4"
         style={{ background: "#111118", border: "1.5px solid rgba(255,255,255,0.063)" }}
       >
         <div className="text-xs font-bold text-[#55556a] uppercase tracking-wider mb-3">
-          📊 Ukens statistikk
+          📊 Din statistikk
         </div>
         <div className="grid grid-cols-3 gap-3">
           {[

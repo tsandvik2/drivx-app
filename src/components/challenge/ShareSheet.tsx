@@ -41,27 +41,31 @@ export function ShareSheet({ challengeText, username, photoUrl, pts, onNext }: S
   async function quickShare(platform: "snap" | "insta" | "tiktok" | "sms") {
     const text = `Jeg fullførte NÅ-utfordringen: "${challengeText}" 🔥 Last ned NÅ-appen!`;
 
+    await navigator.clipboard?.writeText(text).catch(() => {});
+
     if (platform === "snap") {
-      // Deep link to Snapchat camera with clipboard
-      await navigator.clipboard?.writeText(text).catch(() => {});
-      window.location.href = "snapchat://";
+      const a = document.createElement("a");
+      a.href = "snapchat://";
+      a.click();
       setTimeout(() => {
-        if (document.hidden) return;
-        toast.info("Åpner Snapchat — lim inn teksten!");
+        if (!document.hidden) window.open("https://www.snapchat.com/", "_blank");
+        else toast.info("Åpner Snapchat — lim inn teksten!");
       }, 1000);
     } else if (platform === "insta") {
-      await navigator.clipboard?.writeText(text).catch(() => {});
-      window.location.href = "instagram://camera";
+      const a = document.createElement("a");
+      a.href = "instagram://camera";
+      a.click();
       setTimeout(() => {
-        if (document.hidden) return;
-        toast.info("Åpner Instagram — lim inn teksten!");
+        if (!document.hidden) window.open("https://www.instagram.com/", "_blank");
+        else toast.info("Åpner Instagram — lim inn teksten!");
       }, 1000);
     } else if (platform === "tiktok") {
-      await navigator.clipboard?.writeText(text).catch(() => {});
-      window.location.href = "tiktok://";
+      const a = document.createElement("a");
+      a.href = "tiktok://";
+      a.click();
       setTimeout(() => {
-        if (document.hidden) return;
-        toast.info("Åpner TikTok — lim inn teksten!");
+        if (!document.hidden) window.open("https://www.tiktok.com/", "_blank");
+        else toast.info("Åpner TikTok — lim inn teksten!");
       }, 1000);
     } else if (platform === "sms") {
       window.location.href = `sms:?body=${encodeURIComponent(text)}`;

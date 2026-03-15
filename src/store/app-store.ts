@@ -61,6 +61,7 @@ interface AppState {
   completeChallenge: (pts: number, challengeText: string, emoji: string) => void;
   completeOnboarding: () => void;
   resetProfile: () => void;
+  validateStreak: () => void;
 }
 
 const defaultProfile: UserProfile = {
@@ -186,6 +187,25 @@ export const useAppStore = create<AppState>()(
           hasShared: false,
           onboardingComplete: false,
         }),
+
+      validateStreak: () => {
+        const state = get();
+        const today = new Date().toDateString();
+        const yesterday = new Date(Date.now() - 86400000).toDateString();
+        const lastDate = state.profile.dailyDate;
+
+        // If last activity was before yesterday, streak should be 0
+        if (
+          state.profile.streak > 0 &&
+          lastDate !== today &&
+          lastDate !== yesterday &&
+          lastDate !== ""
+        ) {
+          set((s) => ({
+            profile: { ...s.profile, streak: 0 },
+          }));
+        }
+      },
     }),
     {
       name: "na-app-v1",

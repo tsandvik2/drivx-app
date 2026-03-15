@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppStore } from "@/store/app-store";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { AVATARS } from "@/lib/challenges/data";
 
 const BADGES = [
   { id: "first", em: "🎯", name: "Første steg", desc: "Fullfør din første utfordring", req: 1 },
@@ -16,7 +18,11 @@ const BADGES = [
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { profile, resetProfile } = useAppStore();
+  const { profile, setProfile, resetProfile } = useAppStore();
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(profile.name);
+  const [editEmoji, setEditEmoji] = useState(profile.emoji);
+  const [saving, setSaving] = useState(false);
 
   async function handleLogout() {
     const supabase = createClient();
@@ -26,11 +32,24 @@ export default function ProfilePage() {
     router.refresh();
   }
 
-  function handleReset() {
-    if (confirm("Nullstill alt og se startsiden?")) {
-      resetProfile();
-      router.refresh();
+  async function handleSaveProfile() {
+    if (!editName.trim()) {
+      toast.error("Navn kan ikke være tomt");
+      return;
     }
+    setSaving(true);
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase
+        .from("profiles")
+        .update({ username: editName.trim(), avatar_url: editEmoji })
+        .eq("id", user.id);
+    }
+    setProfile({ name: editName.trim(), emoji: editEmoji });
+    setEditing(false);
+    setSaving(false);
+    toast.success("Profil oppdatert! ✅");
   }
 
   const earnedBadgeIds = new Set([
@@ -52,39 +71,103 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Hero */}
+      {/* Hero / Edit */}
       <div
-        className="rounded-[20px] p-5.5 flex items-center gap-4 mb-3.5"
+        className="rounded-[20px] p-5 mb-3.5"
         style={{
           background: "linear-gradient(135deg, rgba(255,45,85,.08), rgba(0,199,255,.04))",
           border: "1.5px solid rgba(255,255,255,0.063)",
         }}
       >
-        <div className="text-[52px] leading-none">{profile.emoji}</div>
-        <div>
-          <div
-            style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 1, lineHeight: 1 }}
-            className="mb-1.5"
-          >
-            {profile.name || "–"}
-          </div>
-          <div className="flex gap-1.5 flex-wrap">
-            {[
-              `${profile.done} fullført`,
-              `${profile.streak} streak`,
-              `${profile.pts} pts`,
-              profile.ageGroup,
-            ].map((tag) => (
-              <span
-                key={tag}
-                className="text-[11px] text-[#55556a] rounded-lg px-2.5 py-0.5 font-semibold"
-                style={{ background: "rgba(255,255,255,0.05)" }}
+        {editing ? (
+          <div>
+            {/* Avatar picker */}
+            <div className="text-xs font-bold text-[#55556a] uppercase tracking-wider mb-2">Velg avatar</div>
+            <div className="grid grid-cols-6 gap-2 mb-4">
+              {AVATARS.map((a) => (
+                <button
+                  key={a.em}
+                  onClick={() => setEditEmoji(a.em)}
+                  className="text-2xl rounded-xl py-2 transition-all active:scale-[0.9]"
+                  style={{
+                    background: editEmoji === a.em ? "rgba(255,45,85,.18)" : "#161622",
+                    border: `1.5px solid ${editEmoji === a.em ? "#ff2d55" : "transparent"}`,
+                  }}
+                >
+                  {a.em}
+                </button>
+              ))}
+            </div>
+            {/* Name input */}
+            <div className="text-xs font-bold text-[#55556a] uppercase tracking-wider mb-2">Navn</div>
+            <input
+              type="text"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              maxLength={20}
+              placeholder="Ditt navn..."
+              className="w-full py-3.5 px-4 rounded-xl text-white font-bold text-base outline-none mb-3"
+              style={{
+                background: "#0a0a0f",
+                border: "1.5px solid rgba(255,255,255,0.1)",
+              }}
+              onFocus={(e) => (e.target.style.borderColor = "#00f0ff")}
+              onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleSaveProfile}
+                disabled={saving}
+                className="flex-1 py-3 rounded-2xl font-extrabold text-sm text-white active:scale-[0.97] transition-all disabled:opacity-60"
+                style={{ background: "linear-gradient(135deg, #ff2d55, #ff6b00)" }}
               >
-                {tag}
-              </span>
-            ))}
+                {saving ? "Lagrer..." : "✓ Lagre"}
+              </button>
+              <button
+                onClick={() => { setEditing(false); setEditName(profile.name); setEditEmoji(profile.emoji); }}
+                className="flex-1 py-3 rounded-2xl font-bold text-sm text-[#55556a] active:scale-[0.97] transition-all"
+                style={{ background: "transparent", border: "1.5px solid rgba(255,255,255,0.063)" }}
+              >
+                Avbryt
+              </button>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center gap-4">
+            <div className="text-[52px] leading-none">{profile.emoji}</div>
+            <div className="flex-1">
+              <div
+                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 1, lineHeight: 1 }}
+                className="mb-1.5"
+              >
+                {profile.name || "–"}
+              </div>
+              <div className="flex gap-1.5 flex-wrap">
+                {[
+                  `${profile.done} fullført`,
+                  `${profile.streak} streak`,
+                  `${profile.pts} pts`,
+                  profile.ageGroup,
+                ].map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-[11px] text-[#55556a] rounded-lg px-2.5 py-0.5 font-semibold"
+                    style={{ background: "rgba(255,255,255,0.05)" }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <button
+              onClick={() => { setEditing(true); setEditName(profile.name); setEditEmoji(profile.emoji); }}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-lg active:scale-[0.9] transition-all flex-shrink-0"
+              style={{ background: "rgba(255,255,255,.07)", border: "1.5px solid rgba(255,255,255,.12)" }}
+            >
+              ✏️
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Streak card */}
@@ -189,13 +272,6 @@ export default function ProfilePage() {
 
       {/* Actions */}
       <div className="flex flex-col gap-2 pb-4">
-        <button
-          onClick={handleReset}
-          className="w-full py-4 rounded-2xl font-bold text-[15px] text-[#55556a] active:scale-[0.97] transition-all"
-          style={{ background: "transparent", border: "1.5px solid rgba(255,255,255,0.063)" }}
-        >
-          ✏️ Endre profil
-        </button>
         <button
           onClick={handleLogout}
           className="w-full py-4 rounded-2xl font-bold text-[15px] active:scale-[0.97] transition-all"

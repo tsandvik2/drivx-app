@@ -173,10 +173,32 @@ export function pickChallenge(opts: ChallengeOptions): SelectedChallenge {
   };
 }
 
-export const DAILY_CHALLENGE: ChallengeEntry = {
-  text: "Hils på tre nye mennesker i dag – si noe genuint hyggelig til hver 👋",
-  cat: "sosial",
-};
+const DAILY_CHALLENGES: ChallengeEntry[] = [
+  { text: "Hils på tre nye mennesker i dag – si noe genuint hyggelig til hver 👋", cat: "sosial" },
+  { text: "Gå en tur uten telefon i minst 15 minutter. Legg merke til omgivelsene 🚶", cat: "fysisk" },
+  { text: "Send en uventet, men oppriktig kompliment til tre forskjellige personer 💌", cat: "sosial" },
+  { text: "Lag noe kreativt med det du har rundt deg akkurat nå – tegn, bygg eller skriv 🎨", cat: "kreativ" },
+  { text: "Ring noen du ikke har snakket med på lenge og spør hvordan det går 📞", cat: "sosial" },
+  { text: "Gjør 30 hoppejakker, 20 push-ups og 30 sit-ups. I gang NÅ! 💪", cat: "fysisk" },
+  { text: "Skriv ned tre ting du er takknemlig for i dag og vis det til noen 📝", cat: "kreativ" },
+  { text: "Prøv noe du aldri har gjort før – uansett hvor lite 🌟", cat: "sosial" },
+  { text: "Ta et bilde av noe vakkert du vanligvis ignorerer 📸", cat: "kreativ", cam: true },
+  { text: "Hjelp noen med noe i dag uten å bli bedt om det 🤝", cat: "sosial" },
+  { text: "Dans til tre sanger på rad – ingen unnskyldninger! 🕺", cat: "fysisk" },
+  { text: "Lag mat til noen eller bestill noe de vil ha 🍕", cat: "sosial" },
+  { text: "Lag en morsom video og send til beste venn 🎥", cat: "kreativ", cam: true },
+  { text: "Meld deg på noe nytt i dag – kurs, sport, aktivitet 📅", cat: "sosial" },
+];
+
+export function getDailyChallenge(): ChallengeEntry {
+  const dayOfYear = Math.floor(
+    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
+  );
+  return DAILY_CHALLENGES[dayOfYear % DAILY_CHALLENGES.length];
+}
+
+/** @deprecated Use getDailyChallenge() instead */
+export const DAILY_CHALLENGE: ChallengeEntry = DAILY_CHALLENGES[0];
 
 export const AVATARS = [
   { em: "🔥", label: "Flamme", vibe: "Energisk" },
