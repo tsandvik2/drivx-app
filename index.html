@@ -1948,7 +1948,16 @@ function getChallenge(){
   else{pool=isGroup?DB.easy.group:DB.easy.solo;level='easy';}
   // Filtrer bort gruppe-ord i solo-pool
   if(!isGroup){
-    const groupWords=['alle ','gjengen','dere ','hverandre','resten','synkroniser','menneskepyramide'];
+    const groupWords=[
+      'alle ','gjengen','dere ','hverandre','resten',
+      'synkroniser','menneskepyramide','bytter sko',
+      'flash mob','springer til','løping rundt',
+      'setter seg på huk og beveger','tegneserie på fire',
+      'pinne ute','felles skulptur','bytter personlighet',
+      'telenovela','turister','ja-personen',
+      'koordinert aksjon','bytter telefon i 3',
+      'ti fremmede','hils på'
+    ];
     const filtered=pool.filter(c=>!groupWords.some(w=>c.text.toLowerCase().includes(w)));
     if(filtered.length>0)pool=filtered;
   }
@@ -2092,13 +2101,14 @@ function startRevealCountdown(){
   let n=3;
   const el=document.getElementById('count-num');
   function tick(){
+    if(n===0){setTimeout(showFlipReveal,300);return;}
     el.style.animation='none';
     void el.offsetWidth;
     el.style.color=n===1?'var(--red)':'var(--text)';
     el.style.animation='countPop .4s cubic-bezier(.34,1.56,.64,1)';
     el.textContent=n;
-    if(n===0){setTimeout(showFlipReveal,300);return;}
-    n--;setTimeout(tick,900);
+    n--;
+    setTimeout(tick,900);
   }
   tick();
 }
