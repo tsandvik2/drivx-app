@@ -1356,8 +1356,8 @@ const DB={
       {text:"Skriv og send en 10-setnings novelle om naboen din på 5 minutter 📖",cat:"kreativ"},
       {text:"Lær deg en dans-move fra YouTube på 10 minutter og film resultatet 💃",cat:"fysisk",cam:true},
       {text:"Lag en 15-sekunders reklame for gjenstanden nærmest deg akkurat nå 📹",cat:"kreativ",cam:true},
-      {text:"Gå en tur ute og hils på ti fremmede med overdreven entusiasme 👋",cat:"fysisk"},
-      {text:"Ta bilde av fem ting ute som alle er samme farge 🎨",cat:"fysisk",cam:true},
+      {text:"Gå en tur ute og si hei til neste person du møter – med overdreven entusiasme 👋",cat:"fysisk"},
+      {text:"Gå ut og finn fem ting som er samme farge – ta et kreativt bilde av dem 🎨",cat:"fysisk",cam:true},
       {text:"Finn en offentlig benk og hold en stumfilm-monolog på 30 sekunder 🎭",cat:"kreativ",cam:true},
       {text:"Sprint til nærmeste lykt og tilbake – ta tid og forsøk å slå den 🏃",cat:"fysisk"},
       {text:"Lag en skulptur av det du finner ute på 5 minutter 🌿",cat:"kreativ",cam:true},
@@ -2268,8 +2268,12 @@ function openProofCamera(){
 }
 
 function unlockDoneButton(){
-  // Called after proof photo is taken
   proofPhotoTaken=true;
+  if(S.dailyMode){
+    S.dailyMode=false;
+    setTimeout(()=>completeDaily(),300);
+    return;
+  }
   document.getElementById('cs-num-1').className='cs-num done';
   document.getElementById('cs-num-1').textContent='✓';
   document.getElementById('cs-num-2').className='cs-num';
@@ -2307,7 +2311,7 @@ function completeChallenge(){
   // Bonus points for speed
   const pct=timerSecondsLeft/timerTotal;
   const bonus=pct>0.7?5:pct>0.4?2:0;
-  const pts=10+bonus;
+  let pts=10+bonus;
 
   // Maks 10 utfordringer med poeng per dag
   const todayStr=new Date().toDateString();
