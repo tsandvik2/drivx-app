@@ -2669,10 +2669,7 @@ async function shareAndGetPoints(platform){
       toast('🔥 +5 pts for deling!');
     }
   }
-  const shareText='😈 Jeg måtte gjøre dette på DrivX: "'+( S.challenge||'')+'"
-
-Tør du? 👉 tsandvik2.github.io/drivx-app
-#DrivXAppen';
+  const shareText='Jeg matte gjore dette pa DrivX: "'+( S.challenge||'')+'" - Tor du? tsandvik2.github.io/drivx-app #DrivXAppen';
   if(navigator.share){
     try{
       await navigator.share({title:'DrivX-utfordring 🔥',text:shareText});
@@ -3847,7 +3844,7 @@ function nwwSetLoser(player){
 }
 function nwwShare(){
   const link='https://tsandvik2.github.io/drivx-app';
-  const txt='💦 Jeg tapte No Way Water på DrivX 😂 Nå utfordrer jeg DEG! '+link+' #DrivXAppen #NoWayWater';
+  const txt='Jeg tapte No Way Water pa DrivX! Na utfordrer jeg DEG! '+link+' #DrivXAppen #NoWayWater';
   if(navigator.share){navigator.share({title:'No Way Water',text:txt,url:link}).catch(()=>{});}
   else{navigator.clipboard.writeText(txt).catch(()=>{});toast('Kopiert! Lim inn på Snap 👻');}
 }
